@@ -26,7 +26,7 @@
   - OpenClaw installs npm plugins with `npm install --ignore-scripts`.
   - Avoid dependencies that require `postinstall`, native compilation, or generated artifacts at install time.
 
-- [ ] Keep the published package layout aligned with native plugin expectations.
+- [x] Keep the published package layout aligned with native plugin expectations.
   - Root `openclaw.plugin.json`
   - `package.json` with `openclaw.extensions`
   - Built runtime in `dist/`

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { access, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import * as lister from "../dist/tool.js";
@@ -146,6 +146,23 @@ test("package contract: runtime deps and SDK subpath import stay aligned", async
   });
   assert.match(builtEntry, /openclaw\/plugin-sdk\/plugin-entry/);
   assert.match(builtTool, /@sinclair\/typebox/);
+});
+
+test("package layout: publish shape matches native plugin expectations", async () => {
+  const pkg = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+  const manifest = JSON.parse(await readFile(new URL("../openclaw.plugin.json", import.meta.url), "utf8"));
+  const skillEntries = await readdir(new URL("../openclaw/skills", import.meta.url), { withFileTypes: true });
+
+  await access(new URL("../dist/index.js", import.meta.url));
+  await access(new URL("../openclaw/tools/lister.tool.json", import.meta.url));
+
+  assert.equal(manifest.id, "lister");
+  assert.deepEqual(pkg.openclaw.extensions, ["./dist/index.js"]);
+  assert.deepEqual(
+    pkg.files,
+    ["dist", "openclaw", "openclaw.plugin.json", "README.md"]
+  );
+  assert.equal(skillEntries.some((entry) => entry.isDirectory() && entry.name === "lister"), true);
 });
 
 test("create(): creates lists with explicit type and description", async () => {
