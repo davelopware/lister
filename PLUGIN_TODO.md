@@ -34,12 +34,12 @@
 
 ## Validation
 
-- [ ] Test installation from a local package artifact with OpenClaw.
+- [x] Test installation from a local package artifact with OpenClaw.
   - Build/package with `npm pack`
   - Install with `openclaw plugins install ./lister-<version>.tgz`
   - Confirm detection succeeds
 
-- [ ] Verify plugin discovery and runtime registration in OpenClaw.
+- [x] Verify plugin discovery and runtime registration in OpenClaw.
   - Check `openclaw plugins list`
   - Check `openclaw plugins inspect lister`
   - Restart the gateway if required
