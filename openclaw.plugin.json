@@ -1,0 +1,14 @@
+{
+  "id": "lister",
+  "name": "Lister",
+  "description": "Structured local list management for OpenClaw workflows.",
+  "version": "0.1.0",
+  "skills": [
+    "openclaw/skills"
+  ],
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}

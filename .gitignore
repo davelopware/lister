@@ -15,6 +15,7 @@ lister-store/
 .DS_Store
 Thumbs.db
 .vscode/
+.codex/
 
 # Environment overrides
 .env

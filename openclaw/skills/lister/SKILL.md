@@ -47,4 +47,4 @@ user-invocable: true
 - clear({"list":"tasks","confirm":true})
 
 ## References
-- Tool manifest: [../tools/lister.tool.json](../tools/lister.tool.json)
+- Tool manifest: [../../tools/lister.tool.json](../../tools/lister.tool.json)
