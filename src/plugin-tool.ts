@@ -1,5 +1,7 @@
+import { join, resolve } from "node:path";
+import type { OpenClawPluginToolContext } from "openclaw/plugin-sdk/plugin-entry";
 import { Type } from "@sinclair/typebox";
-import { add, clear, create, items, listTypes, lists, remove, stats, update, type ToolResult } from "./tool.js";
+import { add, clear, create, items, listTypes, lists, remove, stats, update, type ToolContext, type ToolResult } from "./tool.js";
 
 const listerActions = [
   "listTypes",
@@ -25,6 +27,17 @@ const listerListTypes = [
 
 type ListerAction = (typeof listerActions)[number];
 
+interface ListerToolParams {
+  action: ListerAction;
+  list?: string;
+  id?: number;
+  limit?: number;
+  listType?: (typeof listerListTypes)[number];
+  description?: string;
+  confirm?: boolean;
+  data?: Record<string, unknown>;
+}
+
 function stringEnum<T extends readonly string[]>(values: T, description: string) {
   return Type.Unsafe<T[number]>({
     type: "string",
@@ -37,11 +50,145 @@ function formatResult(result: ToolResult): string {
   return JSON.stringify(result, null, 2);
 }
 
-export function createListerTool() {
+function resolveRuntimeToolContext(ctx?: OpenClawPluginToolContext): ToolContext | undefined {
+  if (!ctx) {
+    return undefined;
+  }
+  if (ctx.workspaceDir && ctx.workspaceDir.trim() !== "") {
+    return { dbPath: resolve(join(ctx.workspaceDir, "lister-store")) };
+  }
+  if (ctx.agentDir && ctx.agentDir.trim() !== "") {
+    return { dbPath: resolve(join(ctx.agentDir, "lister-store")) };
+  }
+  return undefined;
+}
+
+function validateActionParams(params: ListerToolParams): ToolResult | undefined {
+  switch (params.action) {
+    case "listTypes":
+    case "lists":
+    case "stats":
+      return undefined;
+    case "create":
+    case "items":
+      if (typeof params.list !== "string" || params.list.trim() === "") {
+        return { ok: false, error: "list is required" };
+      }
+      return undefined;
+    case "add":
+      if (typeof params.list !== "string" || params.list.trim() === "") {
+        return { ok: false, error: "list is required" };
+      }
+      if (!params.data || typeof params.data !== "object" || Array.isArray(params.data)) {
+        return { ok: false, error: "data must be a JSON object" };
+      }
+      return undefined;
+    case "remove":
+      if (typeof params.list !== "string" || params.list.trim() === "") {
+        return { ok: false, error: "list is required" };
+      }
+      if (typeof params.id !== "number" || !Number.isInteger(params.id) || params.id < 1) {
+        return { ok: false, error: "id must be a positive integer" };
+      }
+      return undefined;
+    case "update":
+      if (typeof params.list !== "string" || params.list.trim() === "") {
+        return { ok: false, error: "list is required" };
+      }
+      if (typeof params.id !== "number" || !Number.isInteger(params.id) || params.id < 1) {
+        return { ok: false, error: "id must be a positive integer" };
+      }
+      if (!params.data || typeof params.data !== "object" || Array.isArray(params.data)) {
+        return { ok: false, error: "data must be a JSON object" };
+      }
+      return undefined;
+    case "clear":
+      if (typeof params.list !== "string" || params.list.trim() === "") {
+        return { ok: false, error: "list is required" };
+      }
+      if (params.confirm !== true) {
+        return { ok: false, error: "confirm must be true" };
+      }
+      return undefined;
+  }
+}
+
+async function runAction(params: ListerToolParams, context?: ToolContext): Promise<ToolResult> {
+  switch (params.action) {
+    case "listTypes":
+      return listTypes();
+    case "create":
+      return create(
+        {
+          list: params.list ?? "",
+          ...(params.listType ? { listType: params.listType } : {}),
+          ...(params.description !== undefined ? { description: params.description } : {})
+        },
+        context
+      );
+    case "lists":
+      return lists(context);
+    case "add":
+      return add(
+        {
+          list: params.list ?? "",
+          ...(params.id !== undefined ? { id: params.id } : {}),
+          data: params.data ?? {}
+        },
+        context
+      );
+    case "items":
+      return items(
+        {
+          list: params.list ?? "",
+          ...(params.limit !== undefined ? { limit: params.limit } : {})
+        },
+        context
+      );
+    case "remove":
+      return remove(
+        {
+          list: params.list ?? "",
+          id: params.id!
+        },
+        context
+      );
+    case "update":
+      return update(
+        {
+          list: params.list ?? "",
+          id: params.id!,
+          data: params.data ?? {}
+        },
+        context
+      );
+    case "clear":
+      return clear(
+        {
+          list: params.list ?? "",
+          confirm: params.confirm === true
+        },
+        context
+      );
+    case "stats":
+      return stats(context);
+  }
+}
+
+export function createListerTool(ctx?: OpenClawPluginToolContext) {
+  const toolContext = resolveRuntimeToolContext(ctx);
+
   return {
     name: "lister",
     label: "Lister",
     description: "Manage structured local lists. Choose an action, then provide the matching fields such as list, id, data, or confirm.",
+    promptSnippet: "Use `lister` for structured local lists such as tasks, notes, habits, shopping items, contacts, health logs, and waiting-on queues.",
+    promptGuidelines: [
+      "Always provide the `action` field.",
+      "For `add` and `update`, send the full item payload in `data` using the target list type's schema.",
+      "For `clear`, require explicit confirmation with `confirm: true`."
+    ],
+    executionMode: "sequential" as const,
     parameters: Type.Object(
       {
         action: stringEnum(listerActions, "The Lister operation to run."),
@@ -65,79 +212,31 @@ export function createListerTool() {
         additionalProperties: false
       }
     ),
-    async execute(_toolCallId: string, params: {
-      action: ListerAction;
-      list?: string;
-      id?: number;
-      limit?: number;
-      listType?: (typeof listerListTypes)[number];
-      description?: string;
-      confirm?: boolean;
-      data?: Record<string, unknown>;
-    }) {
-      let result: ToolResult;
-
-      switch (params.action) {
-        case "listTypes":
-          result = await listTypes();
-          break;
-        case "create":
-          result = await create(
-            {
-              list: params.list ?? "",
-              ...(params.listType ? { listType: params.listType } : {}),
-              ...(params.description !== undefined ? { description: params.description } : {})
-            }
-          );
-          break;
-        case "lists":
-          result = await lists();
-          break;
-        case "add":
-          result = await add(
-            {
-              list: params.list ?? "",
-              ...(params.id !== undefined ? { id: params.id } : {}),
-              data: params.data ?? {}
-            }
-          );
-          break;
-        case "items":
-          result = await items(
-            {
-              list: params.list ?? "",
-              ...(params.limit !== undefined ? { limit: params.limit } : {})
-            }
-          );
-          break;
-        case "remove":
-          result = await remove({
-            list: params.list ?? "",
-            id: params.id ?? 0
-          });
-          break;
-        case "update":
-          result = await update({
-            list: params.list ?? "",
-            id: params.id ?? 0,
-            data: params.data ?? {}
-          });
-          break;
-        case "clear":
-          result = await clear({
-            list: params.list ?? "",
-            confirm: params.confirm === true
-          });
-          break;
-        case "stats":
-          result = await stats();
-          break;
+    async execute(_toolCallId: string, params: ListerToolParams) {
+      const validationError = validateActionParams(params);
+      if (validationError) {
+        return {
+          content: [{ type: "text" as const, text: formatResult(validationError) }],
+          details: validationError
+        };
       }
 
-      return {
-        content: [{ type: "text" as const, text: formatResult(result) }],
-        details: result
-      };
+      try {
+        const result = await runAction(params, toolContext);
+        return {
+          content: [{ type: "text" as const, text: formatResult(result) }],
+          details: result
+        };
+      } catch (error) {
+        const result = {
+          ok: false,
+          error: error instanceof Error ? error.message : "Lister tool failed"
+        } satisfies ToolResult;
+        return {
+          content: [{ type: "text" as const, text: formatResult(result) }],
+          details: result
+        };
+      }
     }
   };
 }

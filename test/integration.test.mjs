@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import * as lister from "../dist/tool.js";
 import pluginEntry from "../dist/index.js";
+import { createListerTool } from "../dist/plugin-tool.js";
 
 async function withTempStore(run) {
   const dbPath = await mkdtemp(join(tmpdir(), "lister-integration-"));
@@ -43,14 +44,44 @@ test("default plugin entry: registers the lister tool", async () => {
 
   const registered = [];
   pluginEntry.register({
-    registerTool(tool) {
-      registered.push(tool);
+    registerTool(tool, opts) {
+      registered.push({ tool, opts });
     }
   });
 
   assert.equal(registered.length, 1);
-  assert.equal(registered[0].name, "lister");
-  assert.equal(typeof registered[0].execute, "function");
+  assert.deepEqual(registered[0].opts, { names: ["lister"] });
+  assert.equal(typeof registered[0].tool, "function");
+
+  const runtimeTool = registered[0].tool({ workspaceDir: "/tmp/lister-workspace" });
+  assert.equal(runtimeTool.name, "lister");
+  assert.equal(runtimeTool.executionMode, "sequential");
+  assert.equal(typeof runtimeTool.execute, "function");
+});
+
+test("lister tool: uses workspace-scoped storage and preflight validation", async () => {
+  const workspaceDir = await mkdtemp(join(tmpdir(), "lister-workspace-"));
+  try {
+    const tool = createListerTool({ workspaceDir });
+
+    const missingList = await tool.execute("call-1", { action: "create" });
+    assert.equal(missingList.details.ok, false);
+    assert.equal(missingList.details.error, "list is required");
+
+    const created = await tool.execute("call-2", {
+      action: "create",
+      list: "tasks",
+      listType: "todos",
+      description: "Workspace scoped"
+    });
+    assert.equal(created.details.ok, true);
+
+    const stored = await readListFile(join(workspaceDir, "lister-store"), "tasks");
+    assert.equal(stored.description, "Workspace scoped");
+    assert.equal(stored.list_type, "todos");
+  } finally {
+    await rm(workspaceDir, { recursive: true, force: true });
+  }
 });
 
 test("package contract: runtime deps and SDK subpath import stay aligned", async () => {

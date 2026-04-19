@@ -11,7 +11,7 @@
   - Use narrow imports such as `openclaw/plugin-sdk/plugin-entry`.
   - Confirm the package builds cleanly with those imports in compiled output.
 
-- [ ] Define the actual tool registration shape for OpenClaw runtime.
+- [x] Define the actual tool registration shape for OpenClaw runtime.
   - Decide whether Lister is exposed as one multi-action tool or multiple narrower tools.
   - Map current operations (`listTypes`, `create`, `lists`, `add`, `items`, `remove`, `update`, `clear`, `stats`) into the OpenClaw tool contract.
   - Keep the existing function API intact unless there is a strong reason to split it.

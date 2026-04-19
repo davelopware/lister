@@ -28,6 +28,6 @@ export default definePluginEntry({
   name: "Lister",
   description: "Structured local list management for OpenClaw workflows.",
   register(api: OpenClawPluginApi) {
-    api.registerTool(createListerTool());
+    api.registerTool((ctx) => createListerTool(ctx), { names: ["lister"] });
   }
 });
