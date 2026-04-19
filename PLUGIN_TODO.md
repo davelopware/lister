@@ -7,7 +7,7 @@
   - That built file needs to `export default` a plugin entry object created with the OpenClaw SDK.
   - The entry should register Lister as an OpenClaw tool via `register(api)`.
 
-- [ ] Add the OpenClaw plugin SDK dependency and switch runtime imports to the documented SDK subpaths.
+- [x] Add the OpenClaw plugin SDK dependency and switch runtime imports to the documented SDK subpaths.
   - Use narrow imports such as `openclaw/plugin-sdk/plugin-entry`.
   - Confirm the package builds cleanly with those imports in compiled output.
 

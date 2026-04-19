@@ -53,6 +53,18 @@ test("default plugin entry: registers the lister tool", async () => {
   assert.equal(typeof registered[0].execute, "function");
 });
 
+test("package contract: runtime deps and SDK subpath import stay aligned", async () => {
+  const pkg = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+  const builtEntry = await readFile(new URL("../dist/index.js", import.meta.url), "utf8");
+  const builtTool = await readFile(new URL("../dist/plugin-tool.js", import.meta.url), "utf8");
+
+  assert.equal(pkg.dependencies["@sinclair/typebox"], "^0.34.49");
+  assert.equal(pkg.devDependencies.openclaw, "^2026.4.15");
+  assert.equal(pkg.dependencies.openclaw, undefined);
+  assert.match(builtEntry, /openclaw\/plugin-sdk\/plugin-entry/);
+  assert.match(builtTool, /@sinclair\/typebox/);
+});
+
 test("create(): creates lists with explicit type and description", async () => {
   await withTempStore(async (context) => {
     const created = await lister.create({ list: "tasks", listType: "todos", description: "Delivery commitments" }, context);
