@@ -2,7 +2,7 @@
 
 ## Critical Path
 
-- [ ] Replace the current library-style entrypoint with a real native OpenClaw plugin entry module.
+- [x] Replace the current library-style entrypoint with a real native OpenClaw plugin entry module.
   - `package.json` already points `openclaw.extensions` at `./dist/index.js`.
   - That built file needs to `export default` a plugin entry object created with the OpenClaw SDK.
   - The entry should register Lister as an OpenClaw tool via `register(api)`.

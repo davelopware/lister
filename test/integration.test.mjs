@@ -4,6 +4,7 @@ import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import * as lister from "../dist/tool.js";
+import pluginEntry from "../dist/index.js";
 
 async function withTempStore(run) {
   const dbPath = await mkdtemp(join(tmpdir(), "lister-integration-"));
@@ -33,6 +34,23 @@ test("listTypes(): returns all supported types with metadata", async () => {
     todos.fields.map((field) => field.name),
     ["text", "due", "status"]
   );
+});
+
+test("default plugin entry: registers the lister tool", async () => {
+  assert.equal(pluginEntry.id, "lister");
+  assert.equal(pluginEntry.name, "Lister");
+  assert.equal(typeof pluginEntry.register, "function");
+
+  const registered = [];
+  pluginEntry.register({
+    registerTool(tool) {
+      registered.push(tool);
+    }
+  });
+
+  assert.equal(registered.length, 1);
+  assert.equal(registered[0].name, "lister");
+  assert.equal(typeof registered[0].execute, "function");
 });
 
 test("create(): creates lists with explicit type and description", async () => {

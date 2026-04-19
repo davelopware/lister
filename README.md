@@ -13,7 +13,7 @@ Today it already ships:
 - an OpenClaw tool manifest at `openclaw/tools/lister.tool.json`
 - package metadata in `package.json` for native plugin discovery
 
-Current limitation: the runtime plugin entry is not wired up yet, so this package is not yet a complete installable OpenClaw plugin.
+The runtime plugin entry is wired up through `./dist/index.js` and registers Lister as a native OpenClaw tool.
 
 ## Library Usage
 
