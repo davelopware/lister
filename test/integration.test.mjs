@@ -21,6 +21,36 @@ async function readListFile(dbPath, listName) {
   return JSON.parse(raw);
 }
 
+function collectProductionPackages(lock) {
+  const packages = lock.packages ?? {};
+  const root = packages[""] ?? {};
+  const pending = Object.keys(root.dependencies ?? {});
+  const seen = new Set();
+  const resolved = [];
+
+  while (pending.length > 0) {
+    const name = pending.pop();
+    if (!name || seen.has(name)) {
+      continue;
+    }
+    seen.add(name);
+
+    const pkg = packages[`node_modules/${name}`];
+    if (!pkg) {
+      continue;
+    }
+
+    resolved.push({ name, pkg });
+    for (const depName of Object.keys(pkg.dependencies ?? {})) {
+      if (!seen.has(depName)) {
+        pending.push(depName);
+      }
+    }
+  }
+
+  return resolved.sort((left, right) => left.name.localeCompare(right.name));
+}
+
 test("listTypes(): returns all supported types with metadata", async () => {
   const result = await lister.listTypes();
   assert.equal(result.ok, true);
@@ -86,12 +116,23 @@ test("lister tool: uses workspace-scoped storage and preflight validation", asyn
 
 test("package contract: runtime deps and SDK subpath import stay aligned", async () => {
   const pkg = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+  const lock = JSON.parse(await readFile(new URL("../package-lock.json", import.meta.url), "utf8"));
   const builtEntry = await readFile(new URL("../dist/index.js", import.meta.url), "utf8");
   const builtTool = await readFile(new URL("../dist/plugin-tool.js", import.meta.url), "utf8");
+  const productionPackages = collectProductionPackages(lock);
 
   assert.equal(pkg.dependencies["@sinclair/typebox"], "^0.34.49");
   assert.equal(pkg.devDependencies.openclaw, "^2026.4.15");
   assert.equal(pkg.dependencies.openclaw, undefined);
+  assert.deepEqual(
+    productionPackages.map((entry) => entry.name),
+    ["@sinclair/typebox"]
+  );
+  for (const entry of productionPackages) {
+    assert.equal(entry.pkg.hasInstallScript, undefined, `${entry.name} should not require npm lifecycle scripts`);
+    assert.equal(entry.pkg.gypfile, undefined, `${entry.name} should not require native compilation`);
+    assert.equal(entry.pkg.requiresBuild, undefined, `${entry.name} should not require generated build artifacts`);
+  }
   assert.deepEqual(pkg.openclaw.compat, {
     pluginApiRange: ">=2026.4.15 <2027.0.0",
     minGatewayVersion: "2026.4.15"

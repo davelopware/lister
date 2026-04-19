@@ -22,7 +22,7 @@
   - Add `compat` metadata for supported plugin API / gateway versions.
   - Add `build` metadata for the OpenClaw / plugin SDK version used to build the package.
 
-- [ ] Confirm the dependency tree is safe for OpenClaw install behavior.
+- [x] Confirm the dependency tree is safe for OpenClaw install behavior.
   - OpenClaw installs npm plugins with `npm install --ignore-scripts`.
   - Avoid dependencies that require `postinstall`, native compilation, or generated artifacts at install time.
 
