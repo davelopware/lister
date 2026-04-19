@@ -40,7 +40,18 @@
   "openclaw": {
     "extensions": [
       "./dist/index.js"
-    ]
+    ],
+    "compat": {
+      "pluginApiRange": ">=2026.4.15 <2027.0.0",
+      "minGatewayVersion": "2026.4.15"
+    },
+    "build": {
+      "builtWithOpenClawVersion": "2026.4.15",
+      "pluginSdkVersion": "2026.4.15"
+    },
+    "install": {
+      "minHostVersion": ">=2026.4.15"
+    }
   },
   "dependencies": {
     "@sinclair/typebox": "^0.34.49"

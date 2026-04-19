@@ -18,7 +18,7 @@
 
 ## Packaging
 
-- [ ] Add external-plugin compatibility metadata under `package.json > openclaw`.
+- [x] Add external-plugin compatibility metadata under `package.json > openclaw`.
   - Add `compat` metadata for supported plugin API / gateway versions.
   - Add `build` metadata for the OpenClaw / plugin SDK version used to build the package.
 

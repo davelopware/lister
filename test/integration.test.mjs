@@ -92,6 +92,17 @@ test("package contract: runtime deps and SDK subpath import stay aligned", async
   assert.equal(pkg.dependencies["@sinclair/typebox"], "^0.34.49");
   assert.equal(pkg.devDependencies.openclaw, "^2026.4.15");
   assert.equal(pkg.dependencies.openclaw, undefined);
+  assert.deepEqual(pkg.openclaw.compat, {
+    pluginApiRange: ">=2026.4.15 <2027.0.0",
+    minGatewayVersion: "2026.4.15"
+  });
+  assert.deepEqual(pkg.openclaw.build, {
+    builtWithOpenClawVersion: "2026.4.15",
+    pluginSdkVersion: "2026.4.15"
+  });
+  assert.deepEqual(pkg.openclaw.install, {
+    minHostVersion: ">=2026.4.15"
+  });
   assert.match(builtEntry, /openclaw\/plugin-sdk\/plugin-entry/);
   assert.match(builtTool, /@sinclair\/typebox/);
 });
