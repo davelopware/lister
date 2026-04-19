@@ -1,0 +1,21 @@
+node_modules/
+dist/
+*.log
+
+# Build/package artifacts
+release/
+*.tgz
+*.tar.gz
+*.zip
+
+# Local runtime storage
+lister-store/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Environment overrides
+.env
+.env.*

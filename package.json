@@ -1,0 +1,20 @@
+{
+  "name": "lister",
+  "version": "0.1.0",
+  "description": "Simple, fast, opinionated list management for agentic workflows",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc --noEmit",
+    "test": "npm run test:integration",
+    "test:integration": "npm run build && node --test test/integration.test.mjs",
+    "package:openclaw": "./build-package.sh"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.17",
+    "typescript": "^5.8.3"
+  }
+}

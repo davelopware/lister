@@ -1,0 +1,107 @@
+{
+  "name": "lister",
+  "version": "0.1.0",
+  "description": "Simple, fast, efficient, opinionated list management for agentic AI",
+  "runtime": "node",
+  "entrypoint": "dist/tool.js",
+  "handlers": {
+    "listTypes": "listTypes",
+    "create": "create",
+    "lists": "lists",
+    "add": "add",
+    "items": "items",
+    "remove": "remove",
+    "update": "update",
+    "clear": "clear",
+    "stats": "stats"
+  },
+  "install": {
+    "steps": [
+      "npm install",
+      "npm run build"
+    ]
+  },
+  "interface": {
+    "io": "json",
+    "style": "direct-function",
+    "functions": [
+      {
+        "name": "listTypes",
+        "description": "List supported opinionated list types with purpose and fields",
+        "args": {}
+      },
+      {
+        "name": "create",
+        "description": "Create a list with optional type and description",
+        "args": {
+          "list": "string",
+          "listType": "general|todos|people|habits|shopping-items|health-log|waiting-on?",
+          "description": "string?"
+        }
+      },
+      {
+        "name": "lists",
+        "description": "List all known lists with name, list_type, and description",
+        "args": {}
+      },
+      {
+        "name": "add",
+        "description": "Add an item to a list using JSON object with optional positional id insert",
+        "args": {
+          "list": "string",
+          "id": "number?",
+          "data": "object"
+        }
+      },
+      {
+        "name": "items",
+        "description": "Return list items, optionally limited",
+        "args": {
+          "list": "string",
+          "limit": "number?"
+        }
+      },
+      {
+        "name": "remove",
+        "description": "Delete an item by positional id from a specific list",
+        "args": {
+          "list": "string",
+          "id": "number"
+        }
+      },
+      {
+        "name": "update",
+        "description": "Update an item by positional id in a specific list",
+        "args": {
+          "list": "string",
+          "id": "number",
+          "data": "object"
+        }
+      },
+      {
+        "name": "clear",
+        "description": "Clear all items in a list",
+        "args": {
+          "list": "string",
+          "confirm": "true"
+        }
+      },
+      {
+        "name": "stats",
+        "description": "Return aggregate list and item counts",
+        "args": {}
+      }
+    ]
+  },
+  "defaults": {
+    "database": "./lister-store",
+    "strictJsonOutput": true
+  },
+  "schema": {
+    "listFileRoot": {
+      "description": "string",
+      "list_type": "general|todos|people|habits|shopping-items|health-log|waiting-on",
+      "items": "array"
+    }
+  }
+}
