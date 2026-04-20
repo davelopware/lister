@@ -99,7 +99,7 @@ Each list is stored in its own JSON file. Every list file has this root schema:
 ## List Types
 
 - `general`: each item must be `{ "text": string }`
-- `todos`: each item must be `{ "text": string, "due": datetime-string, "status": string }`
+- `todos`: each item must be `{ "text": string, "due": datetime, "status": string }`
 - `people`: each item must be `{ "nickname", "name", "email", "phone", "relation", "birthday", "additional" }` (all string fields)
 - `habits`: each item must be `{ "habit", "frequency", "target", "last_completed", "streak", "notes" }`
 - `shopping-items`: each item must be `{ "item", "quantity", "category", "store", "budget", "status" }`

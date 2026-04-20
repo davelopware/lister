@@ -170,6 +170,7 @@ test("package layout: publish shape matches native plugin expectations", async (
   const skillEntries = await readdir(new URL("../openclaw/skills", import.meta.url), { withFileTypes: true });
 
   await access(new URL("../dist/index.js", import.meta.url));
+  await access(new URL("../dist/builtin-list-types.json", import.meta.url));
   await access(new URL("../openclaw/tools/lister.tool.json", import.meta.url));
 
   assert.equal(manifest.id, "lister");

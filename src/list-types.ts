@@ -1,4 +1,16 @@
-export type ListerListType = "general" | "todos" | "people" | "habits" | "shopping-items" | "health-log" | "waiting-on";
+import builtinListTypesConfig from "./builtin-list-types.json" with { type: "json" };
+
+const BUILTIN_LIST_TYPE_NAMES = [
+  "general",
+  "todos",
+  "people",
+  "habits",
+  "shopping-items",
+  "health-log",
+  "waiting-on"
+] as const;
+
+export type ListerListType = (typeof BUILTIN_LIST_TYPE_NAMES)[number];
 
 export interface ListTypeField {
   name: string;
@@ -7,13 +19,20 @@ export interface ListTypeField {
 }
 
 export interface ListTypeInfo {
-  name: ListerListType;
+  name: string;
   purpose: string;
   fields: ListTypeField[];
 }
 
+interface BuiltinListTypeInfo extends ListTypeInfo {
+  name: ListerListType;
+}
+
+interface BuiltinListTypesConfig {
+  types: BuiltinListTypeInfo[];
+}
+
 interface ListTypeParser {
-  info: ListTypeInfo;
   parseItem: (input: Record<string, unknown>) => Record<string, unknown>;
 }
 
@@ -53,19 +72,70 @@ function exactKeys(input: Record<string, unknown>, allowed: string[]): void {
   }
 }
 
+function isListTypeField(value: unknown): value is ListTypeField {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+  const field = value as Partial<ListTypeField>;
+  return (
+    typeof field.name === "string" &&
+    field.name.trim() !== "" &&
+    typeof field.type === "string" &&
+    field.type.trim() !== "" &&
+    typeof field.description === "string" &&
+    field.description.trim() !== ""
+  );
+}
+
+function loadBuiltinListTypes(config: unknown): Record<ListerListType, BuiltinListTypeInfo> {
+  if (typeof config !== "object" || config === null || Array.isArray(config)) {
+    throw new Error("Invalid built-in list type config");
+  }
+
+  const typedConfig = config as Partial<BuiltinListTypesConfig>;
+  if (!Array.isArray(typedConfig.types)) {
+    throw new Error("Built-in list type config must contain a types array");
+  }
+
+  const remainingNames = new Set<ListerListType>(BUILTIN_LIST_TYPE_NAMES);
+  const loaded = {} as Record<ListerListType, BuiltinListTypeInfo>;
+
+  for (const entry of typedConfig.types) {
+    if (typeof entry !== "object" || entry === null || Array.isArray(entry)) {
+      throw new Error("Each built-in list type entry must be an object");
+    }
+    const info = entry as Partial<BuiltinListTypeInfo>;
+    if (typeof info.name !== "string" || !remainingNames.has(info.name as ListerListType)) {
+      throw new Error(`Unknown built-in list type in config: ${String(info.name)}`);
+    }
+    if (typeof info.purpose !== "string" || info.purpose.trim() === "") {
+      throw new Error(`Built-in list type ${info.name} must define a purpose`);
+    }
+    if (!Array.isArray(info.fields) || !info.fields.every((field) => isListTypeField(field))) {
+      throw new Error(`Built-in list type ${info.name} must define valid fields`);
+    }
+
+    const name = info.name as ListerListType;
+    loaded[name] = {
+      name,
+      purpose: info.purpose,
+      fields: info.fields
+    };
+    remainingNames.delete(name);
+  }
+
+  if (remainingNames.size > 0) {
+    throw new Error(`Missing built-in list types in config: ${[...remainingNames].join(", ")}`);
+  }
+
+  return loaded;
+}
+
+const BUILTIN_LIST_TYPE_INFO = loadBuiltinListTypes(builtinListTypesConfig);
+const BUILTIN_LIST_TYPE_NAME_SET = new Set<ListerListType>(BUILTIN_LIST_TYPE_NAMES);
+
 const PARSERS: Record<ListerListType, ListTypeParser> = {
   general: {
-    info: {
-      name: "general",
-      purpose: "General-purpose list where each item is a single text note.",
-      fields: [
-        {
-          name: "text",
-          type: "string",
-          description: "The item content"
-        }
-      ]
-    },
     parseItem(input) {
       exactKeys(input, ["text"]);
       return {
@@ -74,27 +144,6 @@ const PARSERS: Record<ListerListType, ListTypeParser> = {
     }
   },
   todos: {
-    info: {
-      name: "todos",
-      purpose: "Task tracking list with due date and workflow status.",
-      fields: [
-        {
-          name: "text",
-          type: "string",
-          description: "Task description"
-        },
-        {
-          name: "due",
-          type: "datetime string",
-          description: "Due timestamp in parseable datetime format"
-        },
-        {
-          name: "status",
-          type: "string",
-          description: "Current task status"
-        }
-      ]
-    },
     parseItem(input) {
       exactKeys(input, ["text", "due", "status"]);
       return {
@@ -105,47 +154,6 @@ const PARSERS: Record<ListerListType, ListTypeParser> = {
     }
   },
   people: {
-    info: {
-      name: "people",
-      purpose: "People/contact list with identity, relationship, and notes.",
-      fields: [
-        {
-          name: "nickname",
-          type: "string",
-          description: "Short or familiar name"
-        },
-        {
-          name: "name",
-          type: "string",
-          description: "Full name"
-        },
-        {
-          name: "email",
-          type: "string",
-          description: "Email address"
-        },
-        {
-          name: "phone",
-          type: "string",
-          description: "Phone number"
-        },
-        {
-          name: "relation",
-          type: "string",
-          description: "How this person relates to you"
-        },
-        {
-          name: "birthday",
-          type: "string",
-          description: "Birthday representation"
-        },
-        {
-          name: "additional",
-          type: "string",
-          description: "Additional notes"
-        }
-      ]
-    },
     parseItem(input) {
       exactKeys(input, ["nickname", "name", "email", "phone", "relation", "birthday", "additional"]);
       return {
@@ -160,42 +168,6 @@ const PARSERS: Record<ListerListType, ListTypeParser> = {
     }
   },
   habits: {
-    info: {
-      name: "habits",
-      purpose: "Recurring habit tracker with cadence and progress context.",
-      fields: [
-        {
-          name: "habit",
-          type: "string",
-          description: "Habit name"
-        },
-        {
-          name: "frequency",
-          type: "string",
-          description: "Cadence such as daily or weekly"
-        },
-        {
-          name: "target",
-          type: "string",
-          description: "Target behavior or quantity"
-        },
-        {
-          name: "last_completed",
-          type: "datetime string",
-          description: "Last completion timestamp"
-        },
-        {
-          name: "streak",
-          type: "number",
-          description: "Current streak count"
-        },
-        {
-          name: "notes",
-          type: "string",
-          description: "Extra notes"
-        }
-      ]
-    },
     parseItem(input) {
       exactKeys(input, ["habit", "frequency", "target", "last_completed", "streak", "notes"]);
       return {
@@ -209,42 +181,6 @@ const PARSERS: Record<ListerListType, ListTypeParser> = {
     }
   },
   "shopping-items": {
-    info: {
-      name: "shopping-items",
-      purpose: "Shopping planning with quantity, category, and budget context.",
-      fields: [
-        {
-          name: "item",
-          type: "string",
-          description: "Product or item name"
-        },
-        {
-          name: "quantity",
-          type: "number",
-          description: "Desired quantity"
-        },
-        {
-          name: "category",
-          type: "string",
-          description: "Category such as produce or household"
-        },
-        {
-          name: "store",
-          type: "string",
-          description: "Preferred store"
-        },
-        {
-          name: "budget",
-          type: "number",
-          description: "Expected spend"
-        },
-        {
-          name: "status",
-          type: "string",
-          description: "Shopping status"
-        }
-      ]
-    },
     parseItem(input) {
       exactKeys(input, ["item", "quantity", "category", "store", "budget", "status"]);
       return {
@@ -258,42 +194,6 @@ const PARSERS: Record<ListerListType, ListTypeParser> = {
     }
   },
   "health-log": {
-    info: {
-      name: "health-log",
-      purpose: "Structured health metric logging for trend and routine tracking.",
-      fields: [
-        {
-          name: "metric",
-          type: "string",
-          description: "Metric name"
-        },
-        {
-          name: "value",
-          type: "number",
-          description: "Measured value"
-        },
-        {
-          name: "unit",
-          type: "string",
-          description: "Measurement unit"
-        },
-        {
-          name: "recorded_at",
-          type: "datetime string",
-          description: "Measurement timestamp"
-        },
-        {
-          name: "context",
-          type: "string",
-          description: "Measurement context"
-        },
-        {
-          name: "notes",
-          type: "string",
-          description: "Additional notes"
-        }
-      ]
-    },
     parseItem(input) {
       exactKeys(input, ["metric", "value", "unit", "recorded_at", "context", "notes"]);
       return {
@@ -307,42 +207,6 @@ const PARSERS: Record<ListerListType, ListTypeParser> = {
     }
   },
   "waiting-on": {
-    info: {
-      name: "waiting-on",
-      purpose: "Track delegated or pending responses with follow-up dates.",
-      fields: [
-        {
-          name: "subject",
-          type: "string",
-          description: "What is pending"
-        },
-        {
-          name: "owner",
-          type: "string",
-          description: "Who owes the response or action"
-        },
-        {
-          name: "requested_at",
-          type: "datetime string",
-          description: "When the request was made"
-        },
-        {
-          name: "due_by",
-          type: "datetime string",
-          description: "Expected completion date"
-        },
-        {
-          name: "status",
-          type: "string",
-          description: "Current state"
-        },
-        {
-          name: "next_follow_up",
-          type: "datetime string",
-          description: "Planned follow-up timestamp"
-        }
-      ]
-    },
     parseItem(input) {
       exactKeys(input, ["subject", "owner", "requested_at", "due_by", "status", "next_follow_up"]);
       return {
@@ -358,19 +222,11 @@ const PARSERS: Record<ListerListType, ListTypeParser> = {
 };
 
 export function isListType(value: string): value is ListerListType {
-  return (
-    value === "general" ||
-    value === "todos" ||
-    value === "people" ||
-    value === "habits" ||
-    value === "shopping-items" ||
-    value === "health-log" ||
-    value === "waiting-on"
-  );
+  return BUILTIN_LIST_TYPE_NAME_SET.has(value as ListerListType);
 }
 
 export function listTypeInfos(): ListTypeInfo[] {
-  return Object.values(PARSERS).map((parser) => parser.info);
+  return BUILTIN_LIST_TYPE_NAMES.map((name) => BUILTIN_LIST_TYPE_INFO[name]);
 }
 
 export function parseItemForListType(listType: ListerListType, data: Record<string, unknown>): Record<string, unknown> {

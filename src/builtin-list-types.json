@@ -1,0 +1,226 @@
+{
+  "types": [
+    {
+      "name": "general",
+      "purpose": "General-purpose list where each item is a single text note.",
+      "fields": [
+        {
+          "name": "text",
+          "type": "string",
+          "description": "The item content"
+        }
+      ]
+    },
+    {
+      "name": "todos",
+      "purpose": "Task tracking list with due date and workflow status.",
+      "fields": [
+        {
+          "name": "text",
+          "type": "string",
+          "description": "Task description"
+        },
+        {
+          "name": "due",
+          "type": "datetime",
+          "description": "Due Date (and optionally time) ideally in parseable ISO 8601 format"
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "description": "Current status of the task such as pending, in-progress, or completed"
+        }
+      ]
+    },
+    {
+      "name": "people",
+      "purpose": "People/contact list with identity, relationship, and notes.",
+      "fields": [
+        {
+          "name": "nickname",
+          "type": "string",
+          "description": "Short or familiar name"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "description": "Full name"
+        },
+        {
+          "name": "email",
+          "type": "string",
+          "description": "Email address"
+        },
+        {
+          "name": "phone",
+          "type": "string",
+          "description": "Phone number"
+        },
+        {
+          "name": "relation",
+          "type": "string",
+          "description": "How this person relates to you"
+        },
+        {
+          "name": "birthday",
+          "type": "string",
+          "description": "Date of birth"
+        },
+        {
+          "name": "additional",
+          "type": "string",
+          "description": "Additional notes"
+        }
+      ]
+    },
+    {
+      "name": "habits",
+      "purpose": "Recurring habit tracker with cadence and progress context.",
+      "fields": [
+        {
+          "name": "habit",
+          "type": "string",
+          "description": "Habit name"
+        },
+        {
+          "name": "frequency",
+          "type": "string",
+          "description": "Cadence such as daily or weekly"
+        },
+        {
+          "name": "target",
+          "type": "string",
+          "description": "Target behavior, measurement, or quantity"
+        },
+        {
+          "name": "progress",
+          "type": "string",
+          "description": "Current status or progress towards the target. This could be a simple note, a percentage, a measurement, or a count depending on the habit."
+        },
+        {
+          "name": "last_completed",
+          "type": "datetime",
+          "description": "Last completion timestamp, ideally in parseable ISO 8601 format"
+        },
+        {
+          "name": "streak",
+          "type": "number",
+          "description": "Current streak count"
+        },
+        {
+          "name": "notes",
+          "type": "string",
+          "description": "Extra notes"
+        }
+      ]
+    },
+    {
+      "name": "shopping-items",
+      "purpose": "Shopping planning with quantity, category, and budget context.",
+      "fields": [
+        {
+          "name": "item",
+          "type": "string",
+          "description": "Product or item name"
+        },
+        {
+          "name": "quantity",
+          "type": "number",
+          "description": "Desired quantity"
+        },
+        {
+          "name": "category",
+          "type": "string",
+          "description": "Category such as produce or household"
+        },
+        {
+          "name": "store",
+          "type": "string",
+          "description": "Preferred store"
+        },
+        {
+          "name": "budget",
+          "type": "number",
+          "description": "Expected spend"
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "description": "Shopping status such as needed, purchased, or out-of-stock"
+        }
+      ]
+    },
+    {
+      "name": "health-log",
+      "purpose": "Structured health metric logging for trend and routine tracking.",
+      "fields": [
+        {
+          "name": "metric",
+          "type": "string",
+          "description": "Metric name"
+        },
+        {
+          "name": "value",
+          "type": "number",
+          "description": "Measured value"
+        },
+        {
+          "name": "unit",
+          "type": "string",
+          "description": "Measurement unit"
+        },
+        {
+          "name": "recorded_at",
+          "type": "datetime",
+          "description": "Measurement timestamp, ideally in parseable ISO 8601 format"
+        },
+        {
+          "name": "context",
+          "type": "string",
+          "description": "Measurement context such as before/after meal or workout"
+        },
+        {
+          "name": "notes",
+          "type": "string",
+          "description": "Additional notes"
+        }
+      ]
+    },
+    {
+      "name": "waiting-on",
+      "purpose": "Track delegated or pending responses with follow-up dates.",
+      "fields": [
+        {
+          "name": "subject",
+          "type": "string",
+          "description": "What is pending"
+        },
+        {
+          "name": "owner",
+          "type": "string",
+          "description": "Who owes the response or action"
+        },
+        {
+          "name": "requested_at",
+          "type": "datetime",
+          "description": "When the request was made, ideally in parseable ISO 8601 format"
+        },
+        {
+          "name": "due_by",
+          "type": "datetime",
+          "description": "Expected completion date, ideally in parseable ISO 8601 format"
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "description": "Current state"
+        },
+        {
+          "name": "next_follow_up",
+          "type": "datetime",
+          "description": "Planned follow-up timestamp, ideally in parseable ISO 8601 format"
+        }
+      ]
+    }
+  ]
+}

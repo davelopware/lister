@@ -50,9 +50,52 @@
   - Missing manifest / bad entrypoint should produce understandable errors
   - Tool registration errors should be visible through OpenClaw diagnostics
 
+- [ ] Add a command to modify an existing list description.
+  - Support updating the stored `description` for a named list without recreating it.
+  - Expose the capability through the tool contract alongside the other list management actions.
+
+- [ ] Add a search facility for list items.
+  - Decide whether this should be an optional `search` parameter on `items` or a separate `search` command.
+  - Start with simple text matching across any item field within a single list.
+  - Return the matching items only; do not require schema-specific search behavior in v1.
+
 ## Extensible List Type Schemas
 
-- [ ] Move built-in list type definitions out of code and into an internal bundled config file.
+Allow opinionated list type schemas to be defined from configuration rather than hardcoded in TypeScript, while preserving the built-in defaults.
+The goal is to make schema policy easier to evolve, let users add their own list types safely through a predictable file-based extension point,
+and keep runtime/tooling validation aligned with the merged registry of built-in and user-defined types.
+
+Example custom schema file shape:
+
+```json
+{
+  "types": [
+    {
+      "name": "vendors",
+      "purpose": "Track suppliers and commercial contacts.",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "description": "Vendor name"
+        },
+        {
+          "name": "owner",
+          "type": "string",
+          "description": "Internal owner"
+        },
+        {
+          "name": "renewal_date",
+          "type": "datetime",
+          "description": "Renewal date in ISO 8601 format where possible"
+        }
+      ]
+    }
+  ]
+}
+```
+
+- [x] Move built-in list type definitions out of code and into an internal bundled config file.
   - Keep the built-in registry shipped with the package as the default source of truth.
   - Replace hand-authored schema metadata in `src/list-types.ts` with loader-backed definitions.
 
@@ -63,6 +106,7 @@
 
 - [ ] Standardise schema field definitions around a small supported type system.
   - Support `string`, `number`, and `datetime` as the initial field types.
+  - Use the literal schema type name `datetime` in config and bundled metadata; do not spell it as `datetime string`.
   - Document `datetime` values as parseable timestamps, with ISO 8601 recommended where possible.
   - Keep validation behavior aligned with the current parser semantics unless a stricter format is intentionally introduced.
 
