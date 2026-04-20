@@ -2,6 +2,15 @@
   "name": "lister",
   "version": "0.2.0",
   "description": "Simple, fast, opinionated list management for agentic workflows",
+  "homepage": "https://github.com/davelopware/lister",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/davelopware/lister.git"
+  },
+  "bugs": {
+    "url": "https://github.com/davelopware/lister/issues"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
