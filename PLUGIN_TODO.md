@@ -99,33 +99,33 @@ Example custom schema file shape:
   - Keep the built-in registry shipped with the package as the default source of truth.
   - Replace hand-authored schema metadata in `src/list-types.ts` with loader-backed definitions.
 
-- [ ] Add a runtime registry loader that merges built-in types with an optional user-defined config file.
+- [x] Add a runtime registry loader that merges built-in types with an optional user-defined config file.
   - Treat extension of the internal built-ins as implicit; do not require an explicit `extends` field.
   - Use a simple file shape with a top-level `types` array.
   - Load custom types from one predictable location rather than user-authored relative import chains.
 
-- [ ] Standardise schema field definitions around a small supported type system.
+- [x] Standardise schema field definitions around a small supported type system.
   - Support `string`, `number`, and `datetime` as the initial field types.
   - Use the literal schema type name `datetime` in config and bundled metadata; do not spell it as `datetime string`.
   - Document `datetime` values as parseable timestamps, with ISO 8601 recommended where possible.
   - Keep validation behavior aligned with the current parser semantics unless a stricter format is intentionally introduced.
 
-- [ ] Replace the hardcoded closed set of list types with runtime validation against the loaded registry.
+- [x] Replace the hardcoded closed set of list types with runtime validation against the loaded registry.
   - Remove the dependency on a fixed `ListerListType` union for create/add/update flows.
   - Update store-level `list_type` validation to accept any loaded registry type name.
   - Keep invalid or unknown types failing with clear error messages.
 
-- [ ] Loosen the OpenClaw tool contract so custom list types can be passed through at runtime.
+- [x] Loosen the OpenClaw tool contract so custom list types can be passed through at runtime.
   - Change `listType` from an enum-like contract to a string validated by the registry.
   - Keep `listTypes()` as the discovery mechanism for available built-in and user-defined types.
   - Update any plugin-bundled manifests or prompts that currently describe a fixed built-in set.
 
-- [ ] Define safe merge behavior for user-defined types.
+- [x] Define safe merge behavior for user-defined types.
   - Reject duplicate type names by default so extension stays additive in v1.
   - Fail fast on invalid config files with actionable diagnostics.
   - Make merged type discovery visible through `listTypes()`.
 
-- [ ] Add regression and extension coverage in integration tests.
+- [x] Add regression and extension coverage in integration tests.
   - No custom config should preserve current built-in behavior.
   - A valid custom config should allow create/add/update for a new type.
   - Duplicate names and malformed config should fail clearly.

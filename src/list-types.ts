@@ -1,20 +1,18 @@
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import builtinListTypesConfig from "./builtin-list-types.json" with { type: "json" };
 
-const BUILTIN_LIST_TYPE_NAMES = [
-  "general",
-  "todos",
-  "people",
-  "habits",
-  "shopping-items",
-  "health-log",
-  "waiting-on"
-] as const;
+const LIST_TYPE_CONFIG_PATH_SEGMENTS = ["_config", "custom-list-types.json"] as const;
+const LIST_TYPE_NAME_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/;
+const SUPPORTED_FIELD_TYPES = ["string", "number", "datetime"] as const;
+export const DEFAULT_LIST_TYPE_NAME = "general" as const;
 
-export type ListerListType = (typeof BUILTIN_LIST_TYPE_NAMES)[number];
+export type ListerListType = string;
+export type ListTypeFieldType = (typeof SUPPORTED_FIELD_TYPES)[number];
 
 export interface ListTypeField {
   name: string;
-  type: string;
+  type: ListTypeFieldType;
   description: string;
 }
 
@@ -24,16 +22,13 @@ export interface ListTypeInfo {
   fields: ListTypeField[];
 }
 
-interface BuiltinListTypeInfo extends ListTypeInfo {
-  name: ListerListType;
+interface ListTypesConfig {
+  types: ListTypeInfo[];
 }
 
-interface BuiltinListTypesConfig {
-  types: BuiltinListTypeInfo[];
-}
-
-interface ListTypeParser {
-  parseItem: (input: Record<string, unknown>) => Record<string, unknown>;
+interface ListTypeRegistry {
+  types: ListTypeInfo[];
+  byName: Map<string, ListTypeInfo>;
 }
 
 function expectString(value: unknown, fieldName: string): string {
@@ -72,163 +67,187 @@ function exactKeys(input: Record<string, unknown>, allowed: string[]): void {
   }
 }
 
-function isListTypeField(value: unknown): value is ListTypeField {
+function isSupportedFieldType(value: unknown): value is ListTypeFieldType {
+  return typeof value === "string" && SUPPORTED_FIELD_TYPES.includes(value as ListTypeFieldType);
+}
+
+function readString(value: unknown, error: string): string {
+  if (typeof value !== "string" || value.trim() === "") {
+    throw new Error(error);
+  }
+  return value;
+}
+
+function parseField(value: unknown, typeName: string, fieldIndex: number): ListTypeField {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    return false;
+    throw new Error(`${typeName}.fields[${fieldIndex}] must be an object`);
   }
+
   const field = value as Partial<ListTypeField>;
-  return (
-    typeof field.name === "string" &&
-    field.name.trim() !== "" &&
-    typeof field.type === "string" &&
-    field.type.trim() !== "" &&
-    typeof field.description === "string" &&
-    field.description.trim() !== ""
+  const name = readString(field.name, `${typeName}.fields[${fieldIndex}].name must be a non-empty string`);
+  if (!LIST_TYPE_NAME_PATTERN.test(name)) {
+    throw new Error(`${typeName}.fields[${fieldIndex}].name must match ${LIST_TYPE_NAME_PATTERN}`);
+  }
+  if (!isSupportedFieldType(field.type)) {
+    throw new Error(`${typeName}.fields[${fieldIndex}].type must be one of: ${SUPPORTED_FIELD_TYPES.join(", ")}`);
+  }
+  const description = readString(
+    field.description,
+    `${typeName}.fields[${fieldIndex}].description must be a non-empty string`
   );
+
+  return { name, type: field.type, description };
 }
 
-function loadBuiltinListTypes(config: unknown): Record<ListerListType, BuiltinListTypeInfo> {
+function parseListTypeEntry(value: unknown, index: number): ListTypeInfo {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new Error(`types[${index}] must be an object`);
+  }
+
+  const info = value as Partial<ListTypeInfo>;
+  const name = readString(info.name, `types[${index}].name must be a non-empty string`);
+  if (!LIST_TYPE_NAME_PATTERN.test(name)) {
+    throw new Error(`types[${index}].name must match ${LIST_TYPE_NAME_PATTERN}`);
+  }
+  const purpose = readString(info.purpose, `types[${index}].purpose must be a non-empty string`);
+  if (!Array.isArray(info.fields) || info.fields.length === 0) {
+    throw new Error(`types[${index}].fields must be a non-empty array`);
+  }
+
+  const fields = info.fields.map((field, fieldIndex) => parseField(field, name, fieldIndex));
+  const fieldNames = new Set<string>();
+  for (const field of fields) {
+    if (fieldNames.has(field.name)) {
+      throw new Error(`${name}.fields contains duplicate field name: ${field.name}`);
+    }
+    fieldNames.add(field.name);
+  }
+
+  return { name, purpose, fields };
+}
+
+function parseListTypesConfig(config: unknown, sourceLabel: string): ListTypeInfo[] {
   if (typeof config !== "object" || config === null || Array.isArray(config)) {
-    throw new Error("Invalid built-in list type config");
+    throw new Error(`${sourceLabel} must be a JSON object`);
   }
 
-  const typedConfig = config as Partial<BuiltinListTypesConfig>;
+  const typedConfig = config as Partial<ListTypesConfig>;
   if (!Array.isArray(typedConfig.types)) {
-    throw new Error("Built-in list type config must contain a types array");
+    throw new Error(`${sourceLabel} must contain a types array`);
   }
 
-  const remainingNames = new Set<ListerListType>(BUILTIN_LIST_TYPE_NAMES);
-  const loaded = {} as Record<ListerListType, BuiltinListTypeInfo>;
-
-  for (const entry of typedConfig.types) {
-    if (typeof entry !== "object" || entry === null || Array.isArray(entry)) {
-      throw new Error("Each built-in list type entry must be an object");
-    }
-    const info = entry as Partial<BuiltinListTypeInfo>;
-    if (typeof info.name !== "string" || !remainingNames.has(info.name as ListerListType)) {
-      throw new Error(`Unknown built-in list type in config: ${String(info.name)}`);
-    }
-    if (typeof info.purpose !== "string" || info.purpose.trim() === "") {
-      throw new Error(`Built-in list type ${info.name} must define a purpose`);
-    }
-    if (!Array.isArray(info.fields) || !info.fields.every((field) => isListTypeField(field))) {
-      throw new Error(`Built-in list type ${info.name} must define valid fields`);
-    }
-
-    const name = info.name as ListerListType;
-    loaded[name] = {
-      name,
-      purpose: info.purpose,
-      fields: info.fields
-    };
-    remainingNames.delete(name);
-  }
-
-  if (remainingNames.size > 0) {
-    throw new Error(`Missing built-in list types in config: ${[...remainingNames].join(", ")}`);
-  }
-
-  return loaded;
+  return typedConfig.types.map((entry, index) => parseListTypeEntry(entry, index));
 }
 
-const BUILTIN_LIST_TYPE_INFO = loadBuiltinListTypes(builtinListTypesConfig);
-const BUILTIN_LIST_TYPE_NAME_SET = new Set<ListerListType>(BUILTIN_LIST_TYPE_NAMES);
+function loadBuiltinListTypes(config: unknown): ListTypeInfo[] {
+  return parseListTypesConfig(config, "Built-in list type config");
+}
 
-const PARSERS: Record<ListerListType, ListTypeParser> = {
-  general: {
-    parseItem(input) {
-      exactKeys(input, ["text"]);
-      return {
-        text: expectString(input.text, "text")
-      };
-    }
-  },
-  todos: {
-    parseItem(input) {
-      exactKeys(input, ["text", "due", "status"]);
-      return {
-        text: expectString(input.text, "text"),
-        due: expectIsoDateString(input.due, "due"),
-        status: expectString(input.status, "status")
-      };
-    }
-  },
-  people: {
-    parseItem(input) {
-      exactKeys(input, ["nickname", "name", "email", "phone", "relation", "birthday", "additional"]);
-      return {
-        nickname: expectString(input.nickname, "nickname"),
-        name: expectString(input.name, "name"),
-        email: expectString(input.email, "email"),
-        phone: expectString(input.phone, "phone"),
-        relation: expectString(input.relation, "relation"),
-        birthday: expectString(input.birthday, "birthday"),
-        additional: expectString(input.additional, "additional")
-      };
-    }
-  },
-  habits: {
-    parseItem(input) {
-      exactKeys(input, ["habit", "frequency", "target", "last_completed", "streak", "notes"]);
-      return {
-        habit: expectString(input.habit, "habit"),
-        frequency: expectString(input.frequency, "frequency"),
-        target: expectString(input.target, "target"),
-        last_completed: expectIsoDateString(input.last_completed, "last_completed"),
-        streak: expectNumber(input.streak, "streak"),
-        notes: expectString(input.notes, "notes")
-      };
-    }
-  },
-  "shopping-items": {
-    parseItem(input) {
-      exactKeys(input, ["item", "quantity", "category", "store", "budget", "status"]);
-      return {
-        item: expectString(input.item, "item"),
-        quantity: expectNumber(input.quantity, "quantity"),
-        category: expectString(input.category, "category"),
-        store: expectString(input.store, "store"),
-        budget: expectNumber(input.budget, "budget"),
-        status: expectString(input.status, "status")
-      };
-    }
-  },
-  "health-log": {
-    parseItem(input) {
-      exactKeys(input, ["metric", "value", "unit", "recorded_at", "context", "notes"]);
-      return {
-        metric: expectString(input.metric, "metric"),
-        value: expectNumber(input.value, "value"),
-        unit: expectString(input.unit, "unit"),
-        recorded_at: expectIsoDateString(input.recorded_at, "recorded_at"),
-        context: expectString(input.context, "context"),
-        notes: expectString(input.notes, "notes")
-      };
-    }
-  },
-  "waiting-on": {
-    parseItem(input) {
-      exactKeys(input, ["subject", "owner", "requested_at", "due_by", "status", "next_follow_up"]);
-      return {
-        subject: expectString(input.subject, "subject"),
-        owner: expectString(input.owner, "owner"),
-        requested_at: expectIsoDateString(input.requested_at, "requested_at"),
-        due_by: expectIsoDateString(input.due_by, "due_by"),
-        status: expectString(input.status, "status"),
-        next_follow_up: expectIsoDateString(input.next_follow_up, "next_follow_up")
-      };
-    }
+function mergeListTypes(builtinTypes: ListTypeInfo[], customTypes: ListTypeInfo[], configPath: string): ListTypeRegistry {
+  const merged = [...builtinTypes];
+  const byName = new Map<string, ListTypeInfo>();
+
+  for (const entry of builtinTypes) {
+    byName.set(entry.name, entry);
   }
-};
 
-export function isListType(value: string): value is ListerListType {
-  return BUILTIN_LIST_TYPE_NAME_SET.has(value as ListerListType);
+  for (const entry of customTypes) {
+    if (byName.has(entry.name)) {
+      throw new Error(`Duplicate list type "${entry.name}" in ${configPath}; custom types must use unique names`);
+    }
+    byName.set(entry.name, entry);
+    merged.push(entry);
+  }
+
+  return { types: merged, byName };
 }
 
-export function listTypeInfos(): ListTypeInfo[] {
-  return BUILTIN_LIST_TYPE_NAMES.map((name) => BUILTIN_LIST_TYPE_INFO[name]);
+async function loadCustomListTypes(configPath: string): Promise<ListTypeInfo[]> {
+  try {
+    const raw = await readFile(configPath, "utf8");
+    const parsed = JSON.parse(raw) as unknown;
+    return parseListTypesConfig(parsed, `List type config at ${configPath}`);
+  } catch (error) {
+    const asNodeError = error as NodeJS.ErrnoException;
+    if (asNodeError.code === "ENOENT") {
+      return [];
+    }
+    if (error instanceof SyntaxError || error instanceof Error) {
+      throw new Error(`Invalid list type config at ${configPath}: ${error.message}`);
+    }
+    throw error;
+  }
 }
 
-export function parseItemForListType(listType: ListerListType, data: Record<string, unknown>): Record<string, unknown> {
-  return PARSERS[listType].parseItem(data);
+function parseValueForField(field: ListTypeField, value: unknown): string | number {
+  switch (field.type) {
+    case "string":
+      return expectString(value, field.name);
+    case "number":
+      return expectNumber(value, field.name);
+    case "datetime":
+      return expectIsoDateString(value, field.name);
+  }
+}
+
+const BUILTIN_LIST_TYPES = loadBuiltinListTypes(builtinListTypesConfig);
+
+export async function startupChecks(): Promise<void> {
+  const builtinNames = BUILTIN_LIST_TYPES.map((entry) => entry.name);
+  if (new Set(builtinNames).size !== builtinNames.length) {
+    throw new Error("Built-in list types must not contain duplicate names");
+  }
+  if (!BUILTIN_LIST_TYPES.some((entry) => entry.name === DEFAULT_LIST_TYPE_NAME)) {
+    throw new Error(`Built-in list types must include the default list type: ${DEFAULT_LIST_TYPE_NAME}`);
+  }
+}
+
+export function getListTypesConfigPath(dbPath?: string): string {
+  const storePath =
+    typeof dbPath === "string" && dbPath.trim() !== ""
+      ? resolve(dbPath)
+      : resolve(process.cwd(), "lister-store");
+  return resolve(storePath, ...LIST_TYPE_CONFIG_PATH_SEGMENTS);
+}
+
+export async function loadListTypeRegistry(dbPath?: string): Promise<ListTypeRegistry> {
+  const configPath = getListTypesConfigPath(dbPath);
+  const customTypes = await loadCustomListTypes(configPath);
+  return mergeListTypes(BUILTIN_LIST_TYPES, customTypes, configPath);
+}
+
+export async function isListType(value: string, dbPath?: string): Promise<boolean> {
+  const registry = await loadListTypeRegistry(dbPath);
+  return registry.byName.has(value);
+}
+
+export async function getListTypeInfo(name: string, dbPath?: string): Promise<ListTypeInfo | undefined> {
+  const registry = await loadListTypeRegistry(dbPath);
+  return registry.byName.get(name);
+}
+
+export async function listTypeInfos(dbPath?: string): Promise<ListTypeInfo[]> {
+  return (await loadListTypeRegistry(dbPath)).types;
+}
+
+export async function listTypeNames(dbPath?: string): Promise<string[]> {
+  return (await listTypeInfos(dbPath)).map((info) => info.name);
+}
+
+export async function parseItemForListType(
+  listType: string,
+  data: Record<string, unknown>,
+  dbPath?: string
+): Promise<Record<string, unknown>> {
+  const info = await getListTypeInfo(listType, dbPath);
+  if (!info) {
+    throw new Error(`Unknown list type: ${listType}`);
+  }
+
+  exactKeys(
+    data,
+    info.fields.map((field) => field.name)
+  );
+
+  return Object.fromEntries(info.fields.map((field) => [field.name, parseValueForField(field, data[field.name])]));
 }

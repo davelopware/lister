@@ -1,7 +1,14 @@
 import { access } from "node:fs/promises";
 import { resolve } from "node:path";
 import { getListNameValidationError, ListerStore, type ListItem } from "./store.js";
-import { isListType, listTypeInfos, parseItemForListType, type ListerListType } from "./list-types.js";
+import {
+  getListTypesConfigPath,
+  isListType,
+  listTypeInfos,
+  listTypeNames,
+  parseItemForListType,
+  startupChecks
+} from "./list-types.js";
 
 export interface ToolContext {
   dbPath?: string;
@@ -15,7 +22,7 @@ export interface AddInput {
 
 export interface CreateInput {
   list: string;
-  listType?: ListerListType;
+  listType?: string;
   description?: string;
 }
 
@@ -47,7 +54,7 @@ export interface ToolResult {
 
 interface ListRecord {
   name: string;
-  list_type: ListerListType;
+  list_type: string;
   description: string;
 }
 
@@ -64,6 +71,10 @@ function getDbPath(context?: ToolContext): string {
 
 function getStore(context?: ToolContext): ListerStore {
   return new ListerStore(getDbPath(context));
+}
+
+async function runStartupChecks(): Promise<void> {
+  await startupChecks();
 }
 
 async function pathExists(path: string): Promise<boolean> {
@@ -83,6 +94,7 @@ function filterItems(items: ListItem[], limit?: number): ListItem[] {
 }
 
 export async function lists(context?: ToolContext): Promise<ToolResult> {
+  await runStartupChecks();
   const store = getStore(context);
   const names = await store.listNames();
   const listRecords: ListRecord[] = [];
@@ -99,24 +111,31 @@ export async function lists(context?: ToolContext): Promise<ToolResult> {
   return { ok: true, lists: listRecords, count: listRecords.length };
 }
 
-export async function listTypes(): Promise<ToolResult> {
+export async function listTypes(context?: ToolContext): Promise<ToolResult> {
+  await runStartupChecks();
+  const types = await listTypeInfos(getDbPath(context));
   return {
     ok: true,
-    types: listTypeInfos(),
-    count: listTypeInfos().length
+    types,
+    count: types.length
   };
 }
 
 export async function create(input: CreateInput, context?: ToolContext): Promise<ToolResult> {
+  await runStartupChecks();
   const listNameError = getListNameValidationError(input.list);
   if (listNameError) {
     return { ok: false, error: listNameError };
   }
-  if (input.listType && !isListType(input.listType)) {
-    return { ok: false, error: "listType must be one of: general, todos, people, habits, shopping-items, health-log, waiting-on" };
+  const dbPath = getDbPath(context);
+  if (input.listType && !(await isListType(input.listType, dbPath))) {
+    return {
+      ok: false,
+      error: `Unknown listType: ${input.listType}. Available types: ${(await listTypeNames(dbPath)).join(", ")}`
+    };
   }
 
-  const options: { listType?: ListerListType; description?: string } = {};
+  const options: { listType?: string; description?: string } = {};
   if (input.listType) {
     options.listType = input.listType;
   }
@@ -124,7 +143,7 @@ export async function create(input: CreateInput, context?: ToolContext): Promise
     options.description = input.description;
   }
 
-  const result = await getStore(context).createList(input.list, options);
+  const result = await new ListerStore(dbPath).createList(input.list, options);
 
   return {
     ok: true,
@@ -136,6 +155,7 @@ export async function create(input: CreateInput, context?: ToolContext): Promise
 }
 
 export async function add(input: AddInput, context?: ToolContext): Promise<ToolResult> {
+  await runStartupChecks();
   const listNameError = getListNameValidationError(input.list);
   if (listNameError) {
     return { ok: false, error: listNameError };
@@ -149,13 +169,10 @@ export async function add(input: AddInput, context?: ToolContext): Promise<ToolR
 
   const store = getStore(context);
   const info = await store.getListInfo(input.list);
-  if (!isListType(info.listType)) {
-    return { ok: false, error: `Unsupported list_type in storage: ${info.listType}` };
-  }
 
   let parsed: Record<string, unknown>;
   try {
-    parsed = parseItemForListType(info.listType, input.data);
+    parsed = await parseItemForListType(info.listType, input.data, getDbPath(context));
   } catch (error) {
     const message = error instanceof Error ? error.message : "Invalid list item";
     return { ok: false, error: message };
@@ -166,6 +183,7 @@ export async function add(input: AddInput, context?: ToolContext): Promise<ToolR
 }
 
 export async function items(input: ItemsInput, context?: ToolContext): Promise<ToolResult> {
+  await runStartupChecks();
   const listNameError = getListNameValidationError(input.list);
   if (listNameError) {
     return { ok: false, error: listNameError };
@@ -176,6 +194,7 @@ export async function items(input: ItemsInput, context?: ToolContext): Promise<T
 }
 
 export async function remove(input: ItemRefInput, context?: ToolContext): Promise<ToolResult> {
+  await runStartupChecks();
   const listNameError = getListNameValidationError(input.list);
   if (listNameError) {
     return { ok: false, error: listNameError };
@@ -192,6 +211,7 @@ export async function remove(input: ItemRefInput, context?: ToolContext): Promis
 }
 
 export async function update(input: UpdateInput, context?: ToolContext): Promise<ToolResult> {
+  await runStartupChecks();
   const listNameError = getListNameValidationError(input.list);
   if (listNameError) {
     return { ok: false, error: listNameError };
@@ -205,13 +225,10 @@ export async function update(input: UpdateInput, context?: ToolContext): Promise
 
   const store = getStore(context);
   const info = await store.getListInfo(input.list);
-  if (!isListType(info.listType)) {
-    return { ok: false, error: `Unsupported list_type in storage: ${info.listType}` };
-  }
 
   let parsed: Record<string, unknown>;
   try {
-    parsed = parseItemForListType(info.listType, input.data);
+    parsed = await parseItemForListType(info.listType, input.data, getDbPath(context));
   } catch (error) {
     const message = error instanceof Error ? error.message : "Invalid list item";
     return { ok: false, error: message };
@@ -225,6 +242,7 @@ export async function update(input: UpdateInput, context?: ToolContext): Promise
 }
 
 export async function clear(input: ClearInput, context?: ToolContext): Promise<ToolResult> {
+  await runStartupChecks();
   const listNameError = getListNameValidationError(input.list);
   if (listNameError) {
     return { ok: false, error: listNameError };
@@ -237,13 +255,18 @@ export async function clear(input: ClearInput, context?: ToolContext): Promise<T
 }
 
 export async function status(context?: ToolContext): Promise<ToolResult> {
+  await runStartupChecks();
   const storePath = getDbPath(context);
   const storeExists = await pathExists(storePath);
+  const customListTypesPath = getListTypesConfigPath(storePath);
+  const customListTypesExists = await pathExists(customListTypesPath);
   const result = await getStore(context).stats();
   return {
     ok: true,
     store_path: storePath,
     store_exists: storeExists,
+    custom_list_types_path: customListTypesPath,
+    custom_list_types_exists: customListTypesExists,
     ...result
   };
 }

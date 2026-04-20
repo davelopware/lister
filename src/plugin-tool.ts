@@ -15,16 +15,6 @@ const listerActions = [
   "status"
 ] as const;
 
-const listerListTypes = [
-  "general",
-  "todos",
-  "people",
-  "habits",
-  "shopping-items",
-  "health-log",
-  "waiting-on"
-] as const;
-
 type ListerAction = (typeof listerActions)[number];
 
 interface ListerToolParams {
@@ -32,7 +22,7 @@ interface ListerToolParams {
   list?: string;
   id?: number;
   limit?: number;
-  listType?: (typeof listerListTypes)[number];
+  listType?: string;
   description?: string;
   confirm?: boolean;
   data?: Record<string, unknown>;
@@ -120,7 +110,7 @@ function validateActionParams(params: ListerToolParams): ToolResult | undefined 
 async function runAction(params: ListerToolParams, context?: ToolContext): Promise<ToolResult> {
   switch (params.action) {
     case "listTypes":
-      return listTypes();
+      return listTypes(context);
     case "create":
       return create(
         {
@@ -186,9 +176,10 @@ export function createListerTool(ctx?: OpenClawPluginToolContext) {
     name: "lister",
     label: "Lister",
     description: "Manage structured local lists. Choose an action, then provide the matching fields such as list, id, data, or confirm.",
-    promptSnippet: "Use `lister` for structured local lists such as tasks, notes, habits, shopping items, contacts, health logs, and waiting-on queues.",
+    promptSnippet: "Use `lister` for structured local lists such as tasks, notes, habits, shopping items, contacts, health logs, waiting-on queues, and custom typed lists.",
     promptGuidelines: [
       "Always provide the `action` field.",
+      "Use `listTypes` to discover the available built-in and custom `listType` names before creating or editing a typed list.",
       "For `add` and `update`, send the full item payload in `data` using the target list type's schema.",
       "For `clear`, require explicit confirmation with `confirm: true`."
     ],
@@ -199,7 +190,9 @@ export function createListerTool(ctx?: OpenClawPluginToolContext) {
         list: Type.Optional(Type.String({ description: "List name for actions that target a list." })),
         id: Type.Optional(Type.Integer({ minimum: 1, description: "1-based item id for add/remove/update actions." })),
         limit: Type.Optional(Type.Integer({ minimum: 1, description: "Maximum number of items to return from items." })),
-        listType: Type.Optional(stringEnum(listerListTypes, "List type for create.")),
+        listType: Type.Optional(
+          Type.String({ minLength: 1, description: "List type name for create. Use listTypes to discover built-in and custom values." })
+        ),
         description: Type.Optional(Type.String({ description: "Optional human-readable list description for create." })),
         confirm: Type.Optional(Type.Boolean({ description: "Required true for clear." })),
         data: Type.Optional(

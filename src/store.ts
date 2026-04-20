@@ -1,6 +1,6 @@
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { isListType, type ListerListType } from "./list-types.js";
+import { DEFAULT_LIST_TYPE_NAME, getListTypesConfigPath, isListType, listTypeNames, type ListerListType } from "./list-types.js";
 
 const LIST_NAME_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 
@@ -29,7 +29,7 @@ interface ListFile {
 
 const EMPTY_LIST_FILE: ListFile = {
   description: "A description of the list",
-  list_type: "general",
+  list_type: DEFAULT_LIST_TYPE_NAME,
   items: []
 };
 
@@ -87,7 +87,10 @@ export class ListerStore {
     return inserted;
   }
 
-  async createList(listName: string, options?: { description?: string; listType?: ListerListType }): Promise<{ created: boolean; listType: ListerListType; description: string }> {
+  async createList(
+    listName: string,
+    options?: { description?: string; listType?: ListerListType }
+  ): Promise<{ created: boolean; listType: ListerListType; description: string }> {
     this.assertValidListName(listName);
     const existing = await this.readList(listName);
     if (existing.exists) {
@@ -216,7 +219,7 @@ export class ListerStore {
     }
   }
 
-  private parseListFile(raw: string): ListFile {
+  private async parseListFile(raw: string): Promise<ListFile> {
     const parsed = JSON.parse(raw) as unknown;
     if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
       throw new Error("Invalid list file format");
@@ -225,8 +228,11 @@ export class ListerStore {
     if (typeof asList.description !== "string") {
       throw new Error("Invalid list description");
     }
-    if (typeof asList.list_type !== "string" || !isListType(asList.list_type)) {
-      throw new Error("Invalid list_type");
+    if (typeof asList.list_type !== "string" || !(await isListType(asList.list_type, this.dbDir))) {
+      throw new Error(
+        `Invalid list_type: ${String(asList.list_type)}. Available types: ${(await listTypeNames(this.dbDir)).join(", ")}. ` +
+          `Custom types can be defined in ${getListTypesConfigPath(this.dbDir)}`
+      );
     }
     if (!Array.isArray(asList.items) || !asList.items.every((item) => this.isListItem(item))) {
       throw new Error("Invalid list items");
@@ -245,7 +251,7 @@ export class ListerStore {
       const raw = await readFile(path, "utf8");
       return {
         exists: true,
-        list: this.parseListFile(raw)
+        list: await this.parseListFile(raw)
       };
     } catch (error) {
       const asNodeError = error as NodeJS.ErrnoException;

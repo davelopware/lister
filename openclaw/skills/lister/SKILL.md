@@ -15,7 +15,7 @@ user-invocable: true
 - general: text
 - todos: text, due, status
 - people: nickname, name, email, phone, relation, birthday, additional
-- habits: habit, frequency, target, last_completed, streak, notes
+- habits: habit, frequency, target, progress, last_completed, streak, notes
 - shopping-items: item, quantity, category, store, budget, status
 - health-log: metric, value, unit, recorded_at, context, notes
 - waiting-on: subject, owner, requested_at, due_by, status, next_follow_up
@@ -26,7 +26,8 @@ user-invocable: true
 3. Use flat JSON objects that exactly match the selected list type schema.
 4. IDs are 1-based positions; add with id inserts and reindexes down.
 5. clear requires confirm: true.
-6. listTypes() returns supported schemas; check before create, add or update.
+6. listTypes() returns the active merged schema registry; check before create, add or update.
+7. Custom list types can be added in `lister-store/_config/custom-list-types.json` which should follow the same schema structure as `dist/builtin-list-types.json`.
 
 ## Recommended Call Order
 1. listTypes() once per task to confirm schema.

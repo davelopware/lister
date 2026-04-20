@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { access, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import * as lister from "../dist/tool.js";
@@ -19,6 +19,18 @@ async function withTempStore(run) {
 async function readListFile(dbPath, listName) {
   const raw = await readFile(join(dbPath, `${listName}.json`), "utf8");
   return JSON.parse(raw);
+}
+
+async function writeListTypesConfig(dbPath, config) {
+  const configDir = join(dbPath, "_config");
+  await mkdir(configDir, { recursive: true });
+  await writeFile(join(configDir, "custom-list-types.json"), `${JSON.stringify(config, null, 2)}\n`, "utf8");
+}
+
+async function writeRawListTypesConfig(dbPath, raw) {
+  const configDir = join(dbPath, "_config");
+  await mkdir(configDir, { recursive: true });
+  await writeFile(join(configDir, "custom-list-types.json"), raw, "utf8");
 }
 
 function collectProductionPackages(lock) {
@@ -65,6 +77,34 @@ test("listTypes(): returns all supported types with metadata", async () => {
     todos.fields.map((field) => field.name),
     ["text", "due", "status"]
   );
+});
+
+test("listTypes(): merges custom types from store config", async () => {
+  await withTempStore(async (context, dbPath) => {
+    await writeListTypesConfig(dbPath, {
+      types: [
+        {
+          name: "vendors",
+          purpose: "Track suppliers and commercial contacts.",
+          fields: [
+            { name: "name", type: "string", description: "Vendor name" },
+            { name: "owner", type: "string", description: "Internal owner" },
+            { name: "renewal_date", type: "datetime", description: "Renewal date" }
+          ]
+        }
+      ]
+    });
+
+    const result = await lister.listTypes(context);
+    assert.equal(result.ok, true);
+    assert.equal(result.count, 8);
+
+    const vendors = result.types.find((entry) => entry.name === "vendors");
+    assert.deepEqual(
+      vendors.fields.map((field) => field.name),
+      ["name", "owner", "renewal_date"]
+    );
+  });
 });
 
 test("default plugin entry: registers the lister tool", async () => {
@@ -125,6 +165,8 @@ test("lister tool: status output starts with store path and existence", async ()
     assert.equal(result.details.ok, true);
     assert.equal(result.details.store_path, join(workspaceDir, "lister-store"));
     assert.equal(result.details.store_exists, false);
+    assert.equal(result.details.custom_list_types_path, join(workspaceDir, "lister-store", "_config", "custom-list-types.json"));
+    assert.equal(result.details.custom_list_types_exists, false);
   } finally {
     await rm(workspaceDir, { recursive: true, force: true });
   }
@@ -276,6 +318,7 @@ test("add(): supports habits, shopping-items, health-log, and waiting-on payload
           habit: "meditate",
           frequency: "daily",
           target: "10 minutes",
+          progress: "5 of 7 days this week",
           last_completed: "2026-04-18T08:00:00Z",
           streak: 5,
           notes: "Morning session"
@@ -332,6 +375,92 @@ test("add(): supports habits, shopping-items, health-log, and waiting-on payload
       context
     );
     assert.equal(waitingAdded.ok, true);
+  });
+});
+
+test("custom list types: create, add, and update use the merged registry", async () => {
+  await withTempStore(async (context, dbPath) => {
+    await writeListTypesConfig(dbPath, {
+      types: [
+        {
+          name: "vendors",
+          purpose: "Track suppliers and commercial contacts.",
+          fields: [
+            { name: "name", type: "string", description: "Vendor name" },
+            { name: "owner", type: "string", description: "Internal owner" },
+            { name: "renewal_date", type: "datetime", description: "Renewal date" }
+          ]
+        }
+      ]
+    });
+
+    const created = await lister.create({ list: "suppliers", listType: "vendors" }, context);
+    assert.equal(created.ok, true);
+    assert.equal(created.list_type, "vendors");
+
+    const added = await lister.add(
+      {
+        list: "suppliers",
+        data: {
+          name: "Acme Corp",
+          owner: "Finance",
+          renewal_date: "2026-07-01T00:00:00Z"
+        }
+      },
+      context
+    );
+    assert.equal(added.ok, true);
+
+    const updated = await lister.update(
+      {
+        list: "suppliers",
+        id: 1,
+        data: {
+          name: "Acme Corp",
+          owner: "Procurement",
+          renewal_date: "2026-07-15T00:00:00Z"
+        }
+      },
+      context
+    );
+    assert.equal(updated.ok, true);
+
+    const listed = await lister.items({ list: "suppliers" }, context);
+    assert.deepEqual(listed.items[0].data, {
+      name: "Acme Corp",
+      owner: "Procurement",
+      renewal_date: "2026-07-15T00:00:00Z"
+    });
+  });
+});
+
+test("custom list types: duplicate names fail fast", async () => {
+  await withTempStore(async (context, dbPath) => {
+    await writeListTypesConfig(dbPath, {
+      types: [
+        {
+          name: "todos",
+          purpose: "Duplicate built-in",
+          fields: [{ name: "text", type: "string", description: "Text" }]
+        }
+      ]
+    });
+
+    await assert.rejects(
+      () => lister.listTypes(context),
+      /Duplicate list type "todos"/
+    );
+  });
+});
+
+test("custom list types: malformed config fails clearly", async () => {
+  await withTempStore(async (context, dbPath) => {
+    await writeRawListTypesConfig(dbPath, "{\n  \"types\": [\n");
+
+    await assert.rejects(
+      () => lister.listTypes(context),
+      /Invalid list type config at .*custom-list-types\.json:/
+    );
   });
 });
 
@@ -433,6 +562,8 @@ test("status(): returns store path, existence, and aggregate counts across lists
     assert.equal(status.ok, true);
     assert.equal(status.store_path, context.dbPath);
     assert.equal(status.store_exists, true);
+    assert.equal(status.custom_list_types_path, join(context.dbPath, "_config", "custom-list-types.json"));
+    assert.equal(status.custom_list_types_exists, false);
     assert.equal(status.lists, 2);
     assert.equal(status.items, 2);
   });

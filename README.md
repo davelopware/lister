@@ -83,6 +83,7 @@ export LISTER_STORE_FOLDER="/tmp/lister-lists"
 
 Default path is `./lister-store` relative to the current working directory where Lister is invoked.
 `status()` also reports the resolved full store path and whether that store directory exists yet.
+Optional custom list types are loaded from `./lister-store/_config/custom-list-types.json` by default, or from `_config/custom-list-types.json` under the overridden `LISTER_STORE_FOLDER`.
 
 List name restriction: 1-64 chars, lowercase `a-z`, `0-9`, `-`, `_`; must start with `a-z` or `0-9`.
 
@@ -98,13 +99,45 @@ Each list is stored in its own JSON file. Every list file has this root schema:
 
 ## List Types
 
+`listTypes()` is the source of truth for the active merged registry of built-in and user-defined types.
+
 - `general`: each item must be `{ "text": string }`
 - `todos`: each item must be `{ "text": string, "due": datetime, "status": string }`
 - `people`: each item must be `{ "nickname", "name", "email", "phone", "relation", "birthday", "additional" }` (all string fields)
-- `habits`: each item must be `{ "habit", "frequency", "target", "last_completed", "streak", "notes" }`
+- `habits`: each item must be `{ "habit", "frequency", "target", "progress", "last_completed", "streak", "notes" }`
 - `shopping-items`: each item must be `{ "item", "quantity", "category", "store", "budget", "status" }`
 - `health-log`: each item must be `{ "metric", "value", "unit", "recorded_at", "context", "notes" }`
 - `waiting-on`: each item must be `{ "subject", "owner", "requested_at", "due_by", "status", "next_follow_up" }`
+
+Custom type file shape:
+
+```json
+{
+  "types": [
+    {
+      "name": "vendors",
+      "purpose": "Track suppliers and commercial contacts.",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "description": "Vendor name"
+        },
+        {
+          "name": "owner",
+          "type": "string",
+          "description": "Internal owner"
+        },
+        {
+          "name": "renewal_date",
+          "type": "datetime",
+          "description": "Renewal date in parseable ISO 8601 format where possible"
+        }
+      ]
+    }
+  ]
+}
+```
 
 ## Behavior
 

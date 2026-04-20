@@ -27,15 +27,15 @@
     "functions": [
       {
         "name": "listTypes",
-        "description": "List supported opinionated list types with purpose and fields",
+        "description": "List active built-in and custom list types with purpose and fields",
         "args": {}
       },
       {
         "name": "create",
-        "description": "Create a list with optional type and description",
+        "description": "Create a list with optional type and description. Use listTypes first to discover valid listType names.",
         "args": {
           "list": "string",
-          "listType": "general|todos|people|habits|shopping-items|health-log|waiting-on?",
+          "listType": "string?",
           "description": "string?"
         }
       },
@@ -100,7 +100,7 @@
   "schema": {
     "listFileRoot": {
       "description": "string",
-      "list_type": "general|todos|people|habits|shopping-items|health-log|waiting-on",
+      "list_type": "string",
       "items": "array"
     }
   }
