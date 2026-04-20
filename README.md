@@ -180,18 +180,12 @@ npm pack
 
 Release flow:
 
-1. Update `package.json` version:
-
-```bash
-npm version <patch|minor|major>
-```
-
-2. Run the controlled release script with the matching version:
+1. Run the controlled release script with the target version:
 
 ```bash
 npm run release -- <x.y.z>
 ```
 
-`release` checks that the provided version matches `package.json`, creates the git tag, runs `npm pack` (which also runs the test/build flow through `prepack`), verifies the tarball exists, pushes the tag, and creates the GitHub release.
+`release` updates `package.json` to the requested version, creates the git tag, runs `npm pack` (which also runs the test/build flow through `prepack`), verifies the tarball exists, pushes the tag, and creates the GitHub release.
 
 Tests live in `test/integration.test.mjs` and validate file schema plus core list lifecycle behavior.

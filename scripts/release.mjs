@@ -8,6 +8,10 @@ import { fileURLToPath } from "node:url";
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
+// ============================================================================
+// Helper functions.
+// ============================================================================
+
 function usage() {
   console.log("usage: npm run release -- <x.y.z>");
 }
@@ -36,36 +40,43 @@ async function exists(path) {
   }
 }
 
+// ============================================================================
+// Argument parsing.
+// ============================================================================
+
 const requestedVersion = process.argv[2];
 
+// Keep the entrypoint explicit and shell-friendly.
 if (!requestedVersion || requestedVersion === "--help" || requestedVersion === "-h") {
   usage();
   process.exit(requestedVersion ? 0 : 1);
 }
 
+// The script adds the tag prefix itself.
 if (requestedVersion.startsWith("v")) {
   throw new Error(`Do not start version with 'v', that will be added automatically: ${requestedVersion}`);
 }
 
+// ============================================================================
+// Main logic.
+// ============================================================================
+
 const packageJsonPath = resolve(rootDir, "package.json");
 const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8"));
-const packageVersion = packageJson.version;
+const currentPackageVersion = packageJson.version;
 
-if (typeof packageVersion !== "string" || packageVersion.trim() === "") {
+if (typeof currentPackageVersion !== "string" || currentPackageVersion.trim() === "") {
   throw new Error("package.json must contain a non-empty version");
 }
 
-if (requestedVersion !== packageVersion) {
-  throw new Error(`version mismatch: arg=${requestedVersion} package.json=${packageVersion}`);
-}
-
-const tag = `v${packageVersion}`;
-const tarballName = `lister-${packageVersion}.tgz`;
+const tag = `v${requestedVersion}`;
+const tarballName = `lister-${requestedVersion}.tgz`;
 const tarballPath = resolve(rootDir, tarballName);
 
 let localTagExists = false;
 let remoteTagExists = false;
 
+// Refuse to silently replace an existing release tag.
 try {
   runCapture("git", ["rev-parse", "--verify", "--quiet", `refs/tags/${tag}`]);
   localTagExists = true;
@@ -102,6 +113,19 @@ if (await exists(tarballPath)) {
   await rm(tarballPath);
 }
 
+// Update package.json without letting npm create its own tag/commit.
+console.log(`Updating version from ${currentPackageVersion} to ${requestedVersion}`);
+
+run("npm", ["version", requestedVersion, "--no-git-tag-version"]);
+
+const updatedPackageJson = JSON.parse(await readFile(packageJsonPath, "utf8"));
+const packageVersion = updatedPackageJson.version;
+
+if (packageVersion !== requestedVersion) {
+  throw new Error(`version update failed: requested=${requestedVersion} package.json=${packageVersion}`);
+}
+
+// Build the release artifact before pushing or publishing anything.
 console.log(`Creating release for ${packageVersion}`);
 
 run("git", ["tag", tag]);
@@ -111,6 +135,7 @@ if (!(await exists(tarballPath))) {
   throw new Error(`expected package artifact was not created: ${tarballName}`);
 }
 
+// Only publish once the version, tag, and tarball are all aligned.
 run("git", ["push", "origin", tag]);
 run("gh", [
   "release",
