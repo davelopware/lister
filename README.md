@@ -91,11 +91,14 @@ Each list is stored in its own JSON file. Every list file has this root schema:
 
 ```json
 {
+  "version": "0.2.0",
   "description": "A description of the list",
   "list_type": "general",
   "items": []
 }
 ```
+
+`version` is the Lister package version that created the file schema.
 
 ## List Types
 
@@ -174,5 +177,21 @@ Create a package artifact:
 ```bash
 npm pack
 ```
+
+Release flow:
+
+1. Update `package.json` version:
+
+```bash
+npm version <patch|minor|major>
+```
+
+2. Run the controlled release script with the matching version:
+
+```bash
+npm run release -- <x.y.z>
+```
+
+`release` checks that the provided version matches `package.json`, creates the git tag, runs `npm pack` (which also runs the test/build flow through `prepack`), verifies the tarball exists, pushes the tag, and creates the GitHub release.
 
 Tests live in `test/integration.test.mjs` and validate file schema plus core list lifecycle behavior.

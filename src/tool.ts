@@ -9,6 +9,7 @@ import {
   parseItemForListType,
   startupChecks
 } from "./list-types.js";
+import { LISTER_PACKAGE_VERSION } from "./version.js";
 
 export interface ToolContext {
   dbPath?: string;
@@ -263,6 +264,7 @@ export async function status(context?: ToolContext): Promise<ToolResult> {
   const result = await getStore(context).stats();
   return {
     ok: true,
+    extension_version: LISTER_PACKAGE_VERSION,
     store_path: storePath,
     store_exists: storeExists,
     custom_list_types_path: customListTypesPath,

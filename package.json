@@ -33,8 +33,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json && node ./scripts/copy-assets.mjs",
     "check": "tsc --noEmit",
-    "gh:prepublish": "sh -c 'test -n \"$1\" || { echo \"usage: npm run gh:prepublish -- <version>\"; exit 1; }; git tag \"v$1\" && git push origin \"v$1\"' --",
-    "gh:publish": "gh release create v$npm_package_version lister-$npm_package_version.tgz --verify-tag --title \"v$npm_package_version\" --notes \"Lister $npm_package_version\"",
+    "release": "node ./scripts/release.mjs",
     "prepack": "npm test",
     "test": "npm run test:integration",
     "test:integration": "npm run build && node --test test/integration.test.mjs"

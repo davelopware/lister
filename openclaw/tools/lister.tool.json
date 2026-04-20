@@ -99,6 +99,7 @@
   },
   "schema": {
     "listFileRoot": {
+      "version": "string",
       "description": "string",
       "list_type": "string",
       "items": "array"

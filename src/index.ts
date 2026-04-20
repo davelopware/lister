@@ -35,6 +35,7 @@ export {
   type ToolResult,
   type UpdateInput
 } from "./tool.js";
+export { LISTER_PACKAGE_VERSION } from "./version.js";
 
 export default definePluginEntry({
   id: "lister",

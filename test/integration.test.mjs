@@ -4,8 +4,14 @@ import { access, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:f
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import * as lister from "../dist/tool.js";
-import pluginEntry from "../dist/index.js";
+import pluginEntry, { LISTER_PACKAGE_VERSION } from "../dist/index.js";
 import { createListerTool } from "../dist/plugin-tool.js";
+
+const listerVersion = LISTER_PACKAGE_VERSION;
+
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 async function withTempStore(run) {
   const dbPath = await mkdtemp(join(tmpdir(), "lister-integration-"));
@@ -161,8 +167,12 @@ test("lister tool: status output starts with store path and existence", async ()
     const result = await tool.execute("call-status", { action: "status" });
     const output = result.content[0]?.text ?? "";
 
-    assert.match(output, /^Lister store: .+lister-store \((exists|does not exist yet)\)\n\{/);
+    assert.match(
+      output,
+      new RegExp(`^Lister version: ${escapeRegex(listerVersion)}\\nLister store: .+lister-store \\((exists|does not exist yet)\\)\\n\\{`)
+    );
     assert.equal(result.details.ok, true);
+    assert.equal(result.details.extension_version, listerVersion);
     assert.equal(result.details.store_path, join(workspaceDir, "lister-store"));
     assert.equal(result.details.store_exists, false);
     assert.equal(result.details.custom_list_types_path, join(workspaceDir, "lister-store", "_config", "custom-list-types.json"));
@@ -560,6 +570,7 @@ test("status(): returns store path, existence, and aggregate counts across lists
 
     const status = await lister.status(context);
     assert.equal(status.ok, true);
+    assert.equal(status.extension_version, listerVersion);
     assert.equal(status.store_path, context.dbPath);
     assert.equal(status.store_exists, true);
     assert.equal(status.custom_list_types_path, join(context.dbPath, "_config", "custom-list-types.json"));
@@ -594,6 +605,7 @@ test("clear(): removes all items from a list and preserves list metadata", async
     const tasksParsed = JSON.parse(tasksRaw);
     assert.equal(tasksParsed.list_type, "todos");
     assert.equal(tasksParsed.description, "Delivery commitments");
+    assert.equal(tasksParsed.version, listerVersion);
     assert.deepEqual(tasksParsed.items, []);
   });
 });
@@ -604,6 +616,7 @@ test("storage: create() writes expected root object", async () => {
 
     const parsed = await readListFile(dbPath, "tasks");
     assert.deepEqual(parsed, {
+      version: listerVersion,
       description: "Delivery commitments",
       list_type: "todos",
       items: []
@@ -618,6 +631,7 @@ test("storage: add() insertion order is persisted with 1-based ids", async () =>
     await lister.add({ list: "notes", id: 1, data: { text: "zero" } }, context);
 
     const parsed = await readListFile(dbPath, "notes");
+    assert.equal(parsed.version, listerVersion);
     assert.equal(parsed.list_type, "general");
     assert.equal(parsed.description, "A description of the list");
     assert.equal(parsed.items.length, 3);
@@ -672,6 +686,7 @@ test("storage: update(), remove(), and clear() persist expected item state", asy
     await lister.clear({ list: "tasks", confirm: true }, context);
     const afterClear = await readListFile(dbPath, "tasks");
     assert.deepEqual(afterClear.items, []);
+    assert.equal(afterClear.version, listerVersion);
     assert.equal(afterClear.list_type, "todos");
   });
 });
@@ -686,6 +701,7 @@ test("storage: LISTER_STORE_FOLDER overrides default storage folder", async () =
     await lister.add({ list: "env-list", data: { text: "from-env" } });
 
     const parsed = await readListFile(storePath, "env-list");
+    assert.equal(parsed.version, listerVersion);
     assert.equal(parsed.list_type, "general");
     assert.deepEqual(parsed.items.map((item) => item.data.text), ["from-env"]);
   } finally {

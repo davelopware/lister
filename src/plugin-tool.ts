@@ -37,9 +37,14 @@ function stringEnum<T extends readonly string[]>(values: T, description: string)
 }
 
 function formatResult(result: ToolResult, action: ListerAction): string {
-  if (action === "status" && typeof result.store_path === "string" && typeof result.store_exists === "boolean") {
+  if (
+    action === "status" &&
+    typeof result.extension_version === "string" &&
+    typeof result.store_path === "string" &&
+    typeof result.store_exists === "boolean"
+  ) {
     const existsText = result.store_exists ? "exists" : "does not exist yet";
-    return `Lister store: ${result.store_path} (${existsText})\n${JSON.stringify(result, null, 2)}`;
+    return `Lister version: ${result.extension_version}\nLister store: ${result.store_path} (${existsText})\n${JSON.stringify(result, null, 2)}`;
   }
   return JSON.stringify(result, null, 2);
 }

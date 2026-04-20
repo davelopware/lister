@@ -1,6 +1,7 @@
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { DEFAULT_LIST_TYPE_NAME, getListTypesConfigPath, isListType, listTypeNames, type ListerListType } from "./list-types.js";
+import { LISTER_PACKAGE_VERSION } from "./version.js";
 
 const LIST_NAME_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 
@@ -22,12 +23,14 @@ export interface ListItem {
 }
 
 interface ListFile {
+  version: string;
   description: string;
   list_type: ListerListType;
   items: ListItem[];
 }
 
 const EMPTY_LIST_FILE: ListFile = {
+  version: LISTER_PACKAGE_VERSION,
   description: "A description of the list",
   list_type: DEFAULT_LIST_TYPE_NAME,
   items: []
@@ -102,6 +105,7 @@ export class ListerStore {
     }
 
     const list: ListFile = {
+      version: EMPTY_LIST_FILE.version,
       description: options?.description ?? EMPTY_LIST_FILE.description,
       list_type: options?.listType ?? EMPTY_LIST_FILE.list_type,
       items: []
@@ -224,7 +228,10 @@ export class ListerStore {
     if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
       throw new Error("Invalid list file format");
     }
-    const asList = parsed as { description?: unknown; list_type?: unknown; items?: unknown };
+    const asList = parsed as { version?: unknown; description?: unknown; list_type?: unknown; items?: unknown };
+    if (typeof asList.version !== "string" || asList.version.trim() === "") {
+      throw new Error("Invalid list version");
+    }
     if (typeof asList.description !== "string") {
       throw new Error("Invalid list description");
     }
@@ -239,6 +246,7 @@ export class ListerStore {
     }
 
     return {
+      version: asList.version,
       description: asList.description,
       list_type: asList.list_type,
       items: asList.items
@@ -259,6 +267,7 @@ export class ListerStore {
         return {
           exists: false,
           list: {
+            version: EMPTY_LIST_FILE.version,
             description: EMPTY_LIST_FILE.description,
             list_type: EMPTY_LIST_FILE.list_type,
             items: []
@@ -273,6 +282,7 @@ export class ListerStore {
     await mkdir(this.dbDir, { recursive: true });
     const payload = JSON.stringify(
       {
+        version: list.version,
         description: list.description,
         list_type: list.list_type,
         items: list.items
