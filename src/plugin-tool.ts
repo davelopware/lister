@@ -1,7 +1,7 @@
 import { join, resolve } from "node:path";
 import type { OpenClawPluginToolContext } from "openclaw/plugin-sdk/plugin-entry";
 import { Type } from "@sinclair/typebox";
-import { add, clear, create, items, listTypes, lists, remove, stats, update, type ToolContext, type ToolResult } from "./tool.js";
+import { add, clear, create, items, listTypes, lists, remove, status, update, type ToolContext, type ToolResult } from "./tool.js";
 
 const listerActions = [
   "listTypes",
@@ -12,7 +12,7 @@ const listerActions = [
   "remove",
   "update",
   "clear",
-  "stats"
+  "status"
 ] as const;
 
 const listerListTypes = [
@@ -46,7 +46,11 @@ function stringEnum<T extends readonly string[]>(values: T, description: string)
   });
 }
 
-function formatResult(result: ToolResult): string {
+function formatResult(result: ToolResult, action: ListerAction): string {
+  if (action === "status" && typeof result.store_path === "string" && typeof result.store_exists === "boolean") {
+    const existsText = result.store_exists ? "exists" : "does not exist yet";
+    return `Lister store: ${result.store_path} (${existsText})\n${JSON.stringify(result, null, 2)}`;
+  }
   return JSON.stringify(result, null, 2);
 }
 
@@ -67,7 +71,7 @@ function validateActionParams(params: ListerToolParams): ToolResult | undefined 
   switch (params.action) {
     case "listTypes":
     case "lists":
-    case "stats":
+    case "status":
       return undefined;
     case "create":
     case "items":
@@ -170,8 +174,8 @@ async function runAction(params: ListerToolParams, context?: ToolContext): Promi
         },
         context
       );
-    case "stats":
-      return stats(context);
+    case "status":
+      return status(context);
   }
 }
 
@@ -216,7 +220,7 @@ export function createListerTool(ctx?: OpenClawPluginToolContext) {
       const validationError = validateActionParams(params);
       if (validationError) {
         return {
-          content: [{ type: "text" as const, text: formatResult(validationError) }],
+          content: [{ type: "text" as const, text: formatResult(validationError, params.action) }],
           details: validationError
         };
       }
@@ -224,7 +228,7 @@ export function createListerTool(ctx?: OpenClawPluginToolContext) {
       try {
         const result = await runAction(params, toolContext);
         return {
-          content: [{ type: "text" as const, text: formatResult(result) }],
+          content: [{ type: "text" as const, text: formatResult(result, params.action) }],
           details: result
         };
       } catch (error) {
@@ -233,7 +237,7 @@ export function createListerTool(ctx?: OpenClawPluginToolContext) {
           error: error instanceof Error ? error.message : "Lister tool failed"
         } satisfies ToolResult;
         return {
-          content: [{ type: "text" as const, text: formatResult(result) }],
+          content: [{ type: "text" as const, text: formatResult(result, params.action) }],
           details: result
         };
       }

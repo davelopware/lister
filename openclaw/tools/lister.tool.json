@@ -1,6 +1,6 @@
 {
   "name": "lister",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Simple, fast, efficient, opinionated list management for agentic AI",
   "runtime": "node",
   "entrypoint": "dist/tool.js",
@@ -13,7 +13,7 @@
     "remove": "remove",
     "update": "update",
     "clear": "clear",
-    "stats": "stats"
+    "status": "status"
   },
   "install": {
     "steps": [
@@ -87,8 +87,8 @@
         }
       },
       {
-        "name": "stats",
-        "description": "Return aggregate list and item counts",
+        "name": "status",
+        "description": "Return the lister-store path, whether it exists, and aggregate list and item counts",
         "args": {}
       }
     ]

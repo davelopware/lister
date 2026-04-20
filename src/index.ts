@@ -11,7 +11,7 @@ export {
   listTypes,
   lists,
   remove,
-  stats,
+  status,
   update,
   type AddInput,
   type ClearInput,

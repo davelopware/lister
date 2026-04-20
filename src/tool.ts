@@ -1,3 +1,4 @@
+import { access } from "node:fs/promises";
 import { resolve } from "node:path";
 import { getListNameValidationError, ListerStore, type ListItem } from "./store.js";
 import { isListType, listTypeInfos, parseItemForListType, type ListerListType } from "./list-types.js";
@@ -63,6 +64,15 @@ function getDbPath(context?: ToolContext): string {
 
 function getStore(context?: ToolContext): ListerStore {
   return new ListerStore(getDbPath(context));
+}
+
+async function pathExists(path: string): Promise<boolean> {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function filterItems(items: ListItem[], limit?: number): ListItem[] {
@@ -226,7 +236,14 @@ export async function clear(input: ClearInput, context?: ToolContext): Promise<T
   return { ok: true, list: input.list, removed };
 }
 
-export async function stats(context?: ToolContext): Promise<ToolResult> {
+export async function status(context?: ToolContext): Promise<ToolResult> {
+  const storePath = getDbPath(context);
+  const storeExists = await pathExists(storePath);
   const result = await getStore(context).stats();
-  return { ok: true, ...result };
+  return {
+    ok: true,
+    store_path: storePath,
+    store_exists: storeExists,
+    ...result
+  };
 }

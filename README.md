@@ -31,7 +31,7 @@ npm run build
 Then import from the compiled output:
 
 ```ts
-import { add, create, items, listTypes, lists, stats, update } from "./dist/tool.js";
+import { add, create, items, listTypes, lists, status, update } from "./dist/tool.js";
 
 const supported = await listTypes();
 
@@ -60,7 +60,7 @@ await update({
   data: { text: "ship v1.1", due: "2026-05-03T09:00:00Z", status: "open" }
 });
 
-const summary = await stats();
+const summary = await status();
 ```
 
 Supported operations:
@@ -73,7 +73,7 @@ Supported operations:
 - `remove(input)`
 - `update(input)`
 - `clear(input)`
-- `stats()`
+- `status()`
 
 Optional: set a custom database location.
 
@@ -82,6 +82,7 @@ export LISTER_STORE_FOLDER="/tmp/lister-lists"
 ```
 
 Default path is `./lister-store` relative to the current working directory where Lister is invoked.
+`status()` also reports the resolved full store path and whether that store directory exists yet.
 
 List name restriction: 1-64 chars, lowercase `a-z`, `0-9`, `-`, `_`; must start with `a-z` or `0-9`.
 

@@ -114,6 +114,22 @@ test("lister tool: uses workspace-scoped storage and preflight validation", asyn
   }
 });
 
+test("lister tool: status output starts with store path and existence", async () => {
+  const workspaceDir = await mkdtemp(join(tmpdir(), "lister-workspace-"));
+  try {
+    const tool = createListerTool({ workspaceDir });
+    const result = await tool.execute("call-status", { action: "status" });
+    const output = result.content[0]?.text ?? "";
+
+    assert.match(output, /^Lister store: .+lister-store \((exists|does not exist yet)\)\n\{/);
+    assert.equal(result.details.ok, true);
+    assert.equal(result.details.store_path, join(workspaceDir, "lister-store"));
+    assert.equal(result.details.store_exists, false);
+  } finally {
+    await rm(workspaceDir, { recursive: true, force: true });
+  }
+});
+
 test("package contract: runtime deps and SDK subpath import stay aligned", async () => {
   const pkg = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
   const lock = JSON.parse(await readFile(new URL("../package-lock.json", import.meta.url), "utf8"));
@@ -400,7 +416,7 @@ test("update(): edits item data by id and validates parser rules", async () => {
   });
 });
 
-test("stats(): returns aggregate counts across lists", async () => {
+test("status(): returns store path, existence, and aggregate counts across lists", async () => {
   await withTempStore(async (context) => {
     await lister.create({ list: "tasks", listType: "todos", description: "Delivery commitments" }, context);
     await lister.add(
@@ -412,10 +428,12 @@ test("stats(): returns aggregate counts across lists", async () => {
     );
     await lister.add({ list: "bugs", data: { text: "Bug one" } }, context);
 
-    const stats = await lister.stats(context);
-    assert.equal(stats.ok, true);
-    assert.equal(stats.lists, 2);
-    assert.equal(stats.items, 2);
+    const status = await lister.status(context);
+    assert.equal(status.ok, true);
+    assert.equal(status.store_path, context.dbPath);
+    assert.equal(status.store_exists, true);
+    assert.equal(status.lists, 2);
+    assert.equal(status.items, 2);
   });
 });
 

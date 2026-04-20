@@ -1,6 +1,6 @@
 ---
 name: lister
-description: "Use for structured list memory with typed schemas. Triggers: backlog, queue, todo, worklist, triage, contacts, habits, shopping, health-log, waiting-on. Commands: listTypes, create, lists, add, items, remove, update, clear, stats."
+description: "Use for structured list memory with typed schemas. Triggers: backlog, queue, todo, worklist, triage, contacts, habits, shopping, health-log, waiting-on. Commands: listTypes, create, lists, add, items, remove, update, clear, status."
 argument-hint: "function name and JSON args"
 user-invocable: true
 ---
@@ -26,7 +26,7 @@ user-invocable: true
 3. Use flat JSON objects that exactly match the selected list type schema.
 4. IDs are 1-based positions; add with id inserts and reindexes down.
 5. clear requires confirm: true.
-6. Return raw tool JSON when possible.
+6. listTypes() returns supported schemas; check before create, add or update.
 
 ## Recommended Call Order
 1. listTypes() once per task to confirm schema.
@@ -35,7 +35,7 @@ user-invocable: true
 4. add({ list, data }) or add({ list, id, data }) for insertions.
 5. items({ list, limit? }) for reads.
 6. update({ list, id, data }) or remove({ list, id }) for edits.
-7. stats() for aggregate summary.
+7. status() for store path/existence and aggregate summary.
 
 ## Minimal Examples
 - create({"list":"tasks","listType":"todos","description":"Delivery commitments"})
