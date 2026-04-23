@@ -1,9 +1,22 @@
+/**
+ * Public module entry for the Lister package.
+ *
+ * In OpenClaw terms, this is the plugin entry module that exports the default
+ * registration object used by the host to expose the `lister` tool.
+ *
+ * Relative to the rest of the Lister entry-point files, this file sits at the
+ * top: it re-exports the public API and types, while delegating actual tool
+ * construction to `plugin-tool.ts`.
+ */
 import { definePluginEntry, type OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import { createListerTool } from "./plugin-tool.js";
 
-export { ListerStore, getListNameValidationError } from "./store/ListerStore.js";
-export type { IListerStore, ListFile, ListItem, ListReadResult } from "./store/IListerStore.js";
+export { ListerStoreService, getListNameValidationError } from "./services/ListerStoreService.js";
+export type { IListerStoreService, ListFile, ListItem, ListReadResult } from "./services/interfaces/IListerStoreService.js";
+export { CommandRegisterService } from "./services/CommandRegisterService.js";
+export type { ICommandRegisterService } from "./services/interfaces/ICommandRegisterService.js";
 export { ListTypeRegisterService } from "./services/ListTypeRegisterService.js";
+export { Services } from "./services/Services.js";
 export {
   DEFAULT_LIST_TYPE_NAME,
   type IListTypeRegisterService,
@@ -12,7 +25,8 @@ export {
   type ListTypeFieldType,
   type ListTypeInfo,
   type ListTypeRegistry
-} from "./services/IListTypeRegisterService.js";
+} from "./services/interfaces/IListTypeRegisterService.js";
+export type { IServices } from "./services/interfaces/IServices.js";
 export {
   add,
   clear,

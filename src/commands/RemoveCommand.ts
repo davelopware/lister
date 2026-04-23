@@ -2,15 +2,16 @@ import { Type } from "@sinclair/typebox";
 import { BaseCommand } from "./base/BaseCommand.js";
 import { createActionSchema } from "./helpers/command-schema-helpers.js";
 import { readRequiredPositiveInt, readRequiredString, requireObject } from "./helpers/command-parse-helpers.js";
-import type { ICommandExecutionContext } from "./interfaces/ICommandExecutionContext.js";
 import type { ICommandParseResult } from "./interfaces/ICommandParseResult.js";
 import type { IRemoveCommand } from "./interfaces/IRemoveCommand.js";
+import type { IServices } from "../services/interfaces/IServices.js";
 import type { ItemRefInput, ToolResult } from "../tool-types.js";
-import { getListNameValidationError } from "../store/ListerStore.js";
+import { getListNameValidationError } from "../services/ListerStoreService.js";
 
 export class RemoveCommand extends BaseCommand<ItemRefInput> implements IRemoveCommand {
-  constructor() {
+  constructor(services: IServices) {
     super(
+      services,
       "remove",
       "Remove an item from a list by its 1-based position id.",
       [
@@ -49,13 +50,13 @@ export class RemoveCommand extends BaseCommand<ItemRefInput> implements IRemoveC
     };
   }
 
-  async execute(parsed: ItemRefInput, context: ICommandExecutionContext): Promise<ToolResult> {
-    context.listTypeRegisterService.startupChecks();
+  async execute(parsed: ItemRefInput): Promise<ToolResult> {
+    this.services.getListTypeRegisterService().startupChecks();
     const listNameError = getListNameValidationError(parsed.list);
     if (listNameError) {
       return { ok: false, error: listNameError };
     }
-    const removed = await context.store.remove(parsed.list, parsed.id);
+    const removed = await this.services.getListerStoreService().remove(parsed.list, parsed.id);
     if (!removed) {
       return { ok: false, error: "item not found" };
     }

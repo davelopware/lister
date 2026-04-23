@@ -260,7 +260,7 @@ test("package contract: runtime deps and SDK subpath import stay aligned", async
     minHostVersion: ">=2026.4.15"
   });
   assert.match(builtEntry, /openclaw\/plugin-sdk\/plugin-entry/);
-  assert.match(builtTool, /createDefaultCommandRegistry/);
+  assert.match(builtTool, /configureServices/);
   assert.match(builtCommand, /@sinclair\/typebox/);
 });
 

@@ -1,4 +1,4 @@
-import type { ListerListType } from "../services/IListTypeRegisterService.js";
+import type { ListerListType } from "./IListTypeRegisterService.js";
 
 export type ListItem = {
   id: number;
@@ -19,7 +19,8 @@ export type ListReadResult = {
   list: ListFile;
 };
 
-export interface IListerStore {
+export interface IListerStoreService {
+  getDbPath(): string;
   listNames(): Promise<string[]>;
   add(listName: string, data: Record<string, unknown>, positionId?: number): Promise<ListItem>;
   createList(

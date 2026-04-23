@@ -1,4 +1,34 @@
-import { createCommandExecutionContext } from "./services/createCommandExecutionContext.js";
+/**
+ * Core Lister command surface and service bootstrap.
+ *
+ * This is the main non-OpenClaw-specific entry point for Lister. It wires the
+ * concrete services into the DI container, exposes the callable Lister command
+ * functions, and dispatches commands through the command register service.
+ *
+ * Relative to the other entry-point files:
+ * - `plugin-tool.ts` wraps this surface for OpenClaw plugin execution
+ * - `tool-types.ts` defines the shared command/result shapes used here
+ * - `index.ts` re-exports this API as part of the package public surface
+ */
+import { AddCommand } from "./commands/AddCommand.js";
+import { ClearCommand } from "./commands/ClearCommand.js";
+import { CommandArgsCommand } from "./commands/CommandArgsCommand.js";
+import { CreateCommand } from "./commands/CreateCommand.js";
+import { ItemsCommand } from "./commands/ItemsCommand.js";
+import { ListsCommand } from "./commands/ListsCommand.js";
+import { ListTypeSchemaCommand } from "./commands/ListTypeSchemaCommand.js";
+import { RemoveCommand } from "./commands/RemoveCommand.js";
+import { ShowCommandsCommand } from "./commands/ShowCommandsCommand.js";
+import { ShowListTypesCommand } from "./commands/ShowListTypesCommand.js";
+import { StatusCommand } from "./commands/StatusCommand.js";
+import { UpdateCommand } from "./commands/UpdateCommand.js";
+import type { IListerCommand } from "./commands/interfaces/IListerCommand.js";
+import { CommandRegisterService } from "./services/CommandRegisterService.js";
+import { ListerStoreService } from "./services/ListerStoreService.js";
+import type { IServices } from "./services/interfaces/IServices.js";
+import { ListTypeRegisterService } from "./services/ListTypeRegisterService.js";
+import { resolveDbPath } from "./utils/pathUtils.js";
+import { Services } from "./services/Services.js";
 import type {
   AddInput,
   ClearInput,
@@ -11,10 +41,46 @@ import type {
   ToolResult,
   UpdateInput
 } from "./tool-types.js";
-import { getDefaultCommandRegistry } from "./commands/createDefaultCommandRegistry.js";
+
+export function configureServices(services: IServices, dbPath: string): IServices {
+  const listTypeRegisterService = new ListTypeRegisterService(dbPath);
+  services.setListTypeRegisterService(listTypeRegisterService);
+
+  const listerStoreService = new ListerStoreService(dbPath, listTypeRegisterService);
+  services.setListerStoreService(listerStoreService);
+
+  const commandRegisterService = new CommandRegisterService(services);
+  services.setCommandRegisterService(commandRegisterService);
+
+  const commands: readonly IListerCommand[] = [
+    new ShowCommandsCommand(services),
+    new CommandArgsCommand(services),
+    new ShowListTypesCommand(services),
+    new ListTypeSchemaCommand(services),
+    new CreateCommand(services),
+    new ListsCommand(services),
+    new AddCommand(services),
+    new ItemsCommand(services),
+    new RemoveCommand(services),
+    new UpdateCommand(services),
+    new ClearCommand(services),
+    new StatusCommand(services)
+  ];
+
+  commandRegisterService.setCommands(commands);
+  return services;
+}
+
+const services = new Services();
+configureServices(services, resolveDbPath());
 
 async function runCommand(commandName: string, input: unknown, context?: ToolContext): Promise<ToolResult> {
-  const registry = getDefaultCommandRegistry();
+  const dbPath = resolveDbPath(context);
+  if (services.getListerStoreService().getDbPath() !== dbPath) {
+    configureServices(services, dbPath);
+  }
+
+  const registry = services.getCommandRegisterService();
   const command = registry.findCommand(commandName);
   if (!command) {
     return { ok: false, error: `Unknown command: ${commandName}` };
@@ -25,7 +91,7 @@ async function runCommand(commandName: string, input: unknown, context?: ToolCon
     return command.buildParseError(parsed);
   }
 
-  return command.execute(parsed.parsed as never, createCommandExecutionContext(registry, context));
+  return command.execute(parsed.parsed as never);
 }
 
 export async function showCommands(): Promise<ToolResult> {

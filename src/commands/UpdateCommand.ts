@@ -7,15 +7,16 @@ import {
   readRequiredString,
   requireObject
 } from "./helpers/command-parse-helpers.js";
-import type { ICommandExecutionContext } from "./interfaces/ICommandExecutionContext.js";
 import type { ICommandParseResult } from "./interfaces/ICommandParseResult.js";
 import type { IUpdateCommand } from "./interfaces/IUpdateCommand.js";
+import type { IServices } from "../services/interfaces/IServices.js";
 import type { ToolResult, UpdateInput } from "../tool-types.js";
-import { getListNameValidationError } from "../store/ListerStore.js";
+import { getListNameValidationError } from "../services/ListerStoreService.js";
 
 export class UpdateCommand extends BaseCommand<UpdateInput> implements IUpdateCommand {
-  constructor() {
+  constructor(services: IServices) {
     super(
+      services,
       "update",
       "Replace an existing item in a list by its 1-based position id.",
       [
@@ -67,19 +68,21 @@ export class UpdateCommand extends BaseCommand<UpdateInput> implements IUpdateCo
     };
   }
 
-  async execute(parsed: UpdateInput, context: ICommandExecutionContext): Promise<ToolResult> {
-    context.listTypeRegisterService.startupChecks();
+  async execute(parsed: UpdateInput): Promise<ToolResult> {
+    const listTypeRegisterService = this.services.getListTypeRegisterService();
+    const store = this.services.getListerStoreService();
+    listTypeRegisterService.startupChecks();
     const listNameError = getListNameValidationError(parsed.list);
     if (listNameError) {
       return { ok: false, error: listNameError };
     }
 
-    const info = await context.store.getListInfo(parsed.list);
+    const info = await store.getListInfo(parsed.list);
     try {
-      const item = await context.store.update(
+      const item = await store.update(
         parsed.list,
         parsed.id,
-        context.listTypeRegisterService.parseItemForListType(info.listType, parsed.data)
+        listTypeRegisterService.parseItemForListType(info.listType, parsed.data)
       );
       if (!item) {
         return { ok: false, error: "item not found" };

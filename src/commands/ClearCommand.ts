@@ -3,14 +3,15 @@ import { BaseCommand } from "./base/BaseCommand.js";
 import { createActionSchema } from "./helpers/command-schema-helpers.js";
 import { readRequiredString, readRequiredTrue, requireObject } from "./helpers/command-parse-helpers.js";
 import type { IClearCommand } from "./interfaces/IClearCommand.js";
-import type { ICommandExecutionContext } from "./interfaces/ICommandExecutionContext.js";
 import type { ICommandParseResult } from "./interfaces/ICommandParseResult.js";
+import type { IServices } from "../services/interfaces/IServices.js";
 import type { ClearInput, ToolResult } from "../tool-types.js";
-import { getListNameValidationError } from "../store/ListerStore.js";
+import { getListNameValidationError } from "../services/ListerStoreService.js";
 
 export class ClearCommand extends BaseCommand<ClearInput> implements IClearCommand {
-  constructor() {
+  constructor(services: IServices) {
     super(
+      services,
       "clear",
       "Remove all items from a list.",
       [
@@ -49,13 +50,13 @@ export class ClearCommand extends BaseCommand<ClearInput> implements IClearComma
     };
   }
 
-  async execute(parsed: ClearInput, context: ICommandExecutionContext): Promise<ToolResult> {
-    context.listTypeRegisterService.startupChecks();
+  async execute(parsed: ClearInput): Promise<ToolResult> {
+    this.services.getListTypeRegisterService().startupChecks();
     const listNameError = getListNameValidationError(parsed.list);
     if (listNameError) {
       return { ok: false, error: listNameError };
     }
-    const removed = await context.store.clear(parsed.list);
+    const removed = await this.services.getListerStoreService().clear(parsed.list);
     return {
       ok: true,
       list: parsed.list,

@@ -2,15 +2,16 @@ import { Type } from "@sinclair/typebox";
 import { BaseCommand } from "./base/BaseCommand.js";
 import { createActionSchema } from "./helpers/command-schema-helpers.js";
 import { readOptionalString, readRequiredString, requireObject } from "./helpers/command-parse-helpers.js";
-import type { ICommandExecutionContext } from "./interfaces/ICommandExecutionContext.js";
 import type { ICommandParseResult } from "./interfaces/ICommandParseResult.js";
 import type { ICreateCommand } from "./interfaces/ICreateCommand.js";
+import type { IServices } from "../services/interfaces/IServices.js";
 import type { CreateInput, ToolResult } from "../tool-types.js";
-import { getListNameValidationError } from "../store/ListerStore.js";
+import { getListNameValidationError } from "../services/ListerStoreService.js";
 
 export class CreateCommand extends BaseCommand<CreateInput> implements ICreateCommand {
-  constructor() {
+  constructor(services: IServices) {
     super(
+      services,
       "create",
       "Create a list with an optional type and description.",
       [{ name: "list", type: "string", description: "List name to create." }],
@@ -58,20 +59,22 @@ export class CreateCommand extends BaseCommand<CreateInput> implements ICreateCo
     };
   }
 
-  async execute(parsed: CreateInput, context: ICommandExecutionContext): Promise<ToolResult> {
-    context.listTypeRegisterService.startupChecks();
+  async execute(parsed: CreateInput): Promise<ToolResult> {
+    const listTypeRegisterService = this.services.getListTypeRegisterService();
+    const store = this.services.getListerStoreService();
+    listTypeRegisterService.startupChecks();
     const listNameError = getListNameValidationError(parsed.list);
     if (listNameError) {
       return { ok: false, error: listNameError };
     }
-    if (parsed.listType && !context.listTypeRegisterService.isListType(parsed.listType)) {
+    if (parsed.listType && !listTypeRegisterService.isListType(parsed.listType)) {
       return {
         ok: false,
-        error: `Unknown listType: ${parsed.listType}. Available types: ${context.listTypeRegisterService.listTypeNames().join(", ")}`
+        error: `Unknown listType: ${parsed.listType}. Available types: ${listTypeRegisterService.listTypeNames().join(", ")}`
       };
     }
 
-    const result = await context.store.createList(parsed.list, {
+    const result = await store.createList(parsed.list, {
       ...(parsed.listType ? { listType: parsed.listType } : {}),
       ...(parsed.description !== undefined ? { description: parsed.description } : {})
     });

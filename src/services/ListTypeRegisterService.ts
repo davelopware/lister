@@ -8,7 +8,7 @@ import {
   type ListTypeFieldType,
   type ListTypeInfo,
   type ListTypeRegistry
-} from "./IListTypeRegisterService.js";
+} from "./interfaces/IListTypeRegisterService.js";
 
 const LIST_TYPE_CONFIG_PATH_SEGMENTS = ["_config", "custom-list-types.json"] as const;
 const LIST_TYPE_NAME_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/;

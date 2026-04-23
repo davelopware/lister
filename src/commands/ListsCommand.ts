@@ -1,13 +1,13 @@
 import { BaseCommand } from "./base/BaseCommand.js";
 import { createActionSchema } from "./helpers/command-schema-helpers.js";
 import { parseNoArgs } from "./helpers/command-parse-helpers.js";
-import type { ICommandExecutionContext } from "./interfaces/ICommandExecutionContext.js";
 import type { IListsCommand } from "./interfaces/IListsCommand.js";
+import type { IServices } from "../services/interfaces/IServices.js";
 import type { ToolResult } from "../tool-types.js";
 
 export class ListsCommand extends BaseCommand<Record<string, never>> implements IListsCommand {
-  constructor() {
-    super("lists", "List all known lists with their type and description.");
+  constructor(services: IServices) {
+    super(services, "lists", "List all known lists with their type and description.");
   }
 
   getSchema() {
@@ -18,12 +18,13 @@ export class ListsCommand extends BaseCommand<Record<string, never>> implements 
     return parseNoArgs(input);
   }
 
-  async execute(_parsed: Record<string, never>, context: ICommandExecutionContext): Promise<ToolResult> {
-    context.listTypeRegisterService.startupChecks();
-    const names = await context.store.listNames();
+  async execute(_parsed: Record<string, never>): Promise<ToolResult> {
+    this.services.getListTypeRegisterService().startupChecks();
+    const store = this.services.getListerStoreService();
+    const names = await store.listNames();
     const lists = [];
     for (const name of names) {
-      const info = await context.store.getListInfo(name);
+      const info = await store.getListInfo(name);
       lists.push({
         name,
         list_type: info.listType,

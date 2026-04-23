@@ -1,7 +1,7 @@
 import type { TSchema } from "@sinclair/typebox";
 import type { ToolResult } from "../../tool-types.js";
+import type { IServices } from "../../services/interfaces/IServices.js";
 import type { ICommandArgument } from "../interfaces/ICommandArgument.js";
-import type { ICommandExecutionContext } from "../interfaces/ICommandExecutionContext.js";
 import type { ICommandParseResult } from "../interfaces/ICommandParseResult.js";
 import type { IListerCommand } from "../interfaces/IListerCommand.js";
 
@@ -10,6 +10,7 @@ export abstract class BaseCommand<TParsed> implements IListerCommand<TParsed> {
   readonly optionalArgs: readonly ICommandArgument[];
 
   protected constructor(
+    protected readonly services: IServices,
     public readonly name: string,
     public readonly description: string,
     requiredArgs: readonly ICommandArgument[] = [],
@@ -34,5 +35,5 @@ export abstract class BaseCommand<TParsed> implements IListerCommand<TParsed> {
     };
   }
 
-  abstract execute(parsed: TParsed, context: ICommandExecutionContext): Promise<ToolResult>;
+  abstract execute(parsed: TParsed): Promise<ToolResult>;
 }

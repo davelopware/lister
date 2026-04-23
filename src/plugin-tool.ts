@@ -1,8 +1,20 @@
+/**
+ * OpenClaw-specific adapter for the Lister tool.
+ *
+ * This file turns the generic Lister command surface into an OpenClaw plugin
+ * tool definition: prompt text, runtime path resolution, parameter schema, and
+ * formatted tool-call responses are all handled here.
+ *
+ * Relative to the other entry-point files:
+ * - `tool.ts` owns concrete service bootstrap and command execution
+ * - `tool-types.ts` defines the shared shapes used here
+ * - `index.ts` publishes this adapter as the plugin's registered tool
+ */
 import { join, resolve } from "node:path";
 import type { OpenClawPluginToolContext } from "openclaw/plugin-sdk/plugin-entry";
 import type { ToolContext, ToolResult } from "./tool-types.js";
-import { createCommandExecutionContext } from "./services/createCommandExecutionContext.js";
-import { createDefaultCommandRegistry } from "./commands/createDefaultCommandRegistry.js";
+import { configureServices } from "./tool.js";
+import { Services } from "./services/Services.js";
 
 function formatResult(result: ToolResult, action: string): string {
   if (
@@ -38,8 +50,9 @@ function asObjectRecord(value: unknown): Record<string, unknown> | undefined {
 }
 
 export function createListerTool(ctx?: OpenClawPluginToolContext) {
-  const registry = createDefaultCommandRegistry();
   const toolContext = resolveRuntimeToolContext(ctx);
+  const services = configureServices(new Services(), toolContext?.dbPath ?? resolve(join(process.cwd(), "lister-store")));
+  const registry = services.getCommandRegisterService();
 
   return {
     name: "lister",
@@ -94,7 +107,7 @@ export function createListerTool(ctx?: OpenClawPluginToolContext) {
       }
 
       try {
-        const result = await command.execute(parsed.parsed as never, createCommandExecutionContext(registry, toolContext));
+        const result = await command.execute(parsed.parsed as never);
         return {
           content: [{ type: "text" as const, text: formatResult(result, command.name) }],
           details: result

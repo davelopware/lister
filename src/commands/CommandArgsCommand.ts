@@ -3,14 +3,14 @@ import { BaseCommand } from "./base/BaseCommand.js";
 import { createActionSchema } from "./helpers/command-schema-helpers.js";
 import { parseRequiredString } from "./helpers/command-parse-helpers.js";
 import type { ICommandArgsCommand } from "./interfaces/ICommandArgsCommand.js";
-import type { ICommandExecutionContext } from "./interfaces/ICommandExecutionContext.js";
 import type { ICommandParseResult } from "./interfaces/ICommandParseResult.js";
-import type { ICommandRegistry } from "./interfaces/ICommandRegistry.js";
+import type { IServices } from "../services/interfaces/IServices.js";
 import type { CommandArgsInput, ToolResult } from "../tool-types.js";
 
 export class CommandArgsCommand extends BaseCommand<CommandArgsInput> implements ICommandArgsCommand {
-  constructor(private readonly registry: ICommandRegistry) {
+  constructor(services: IServices) {
     super(
+      services,
       "commandArgs",
       "Show the required and optional arguments for a specific command.",
       [{ name: "commandName", type: "string", description: "Name of the command to show the arguments for." }]
@@ -36,12 +36,13 @@ export class CommandArgsCommand extends BaseCommand<CommandArgsInput> implements
     };
   }
 
-  async execute(parsed: CommandArgsInput, _context: ICommandExecutionContext): Promise<ToolResult> {
-    const command = this.registry.findCommand(parsed.commandName);
+  async execute(parsed: CommandArgsInput): Promise<ToolResult> {
+    const registry = this.services.getCommandRegisterService();
+    const command = registry.findCommand(parsed.commandName);
     if (!command) {
       return {
         ok: false,
-        error: `Unknown commandName: ${parsed.commandName}. Available commands: ${this.registry.getCommands().map((entry) => entry.name).join(", ")}`
+        error: `Unknown commandName: ${parsed.commandName}. Available commands: ${registry.getCommands().map((entry) => entry.name).join(", ")}`
       };
     }
 

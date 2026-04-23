@@ -2,13 +2,14 @@ import { Type } from "@sinclair/typebox";
 import { BaseCommand } from "./base/BaseCommand.js";
 import { createActionSchema } from "./helpers/command-schema-helpers.js";
 import { readOptionalPositiveInt, readRequiredString, requireObject } from "./helpers/command-parse-helpers.js";
-import type { ICommandExecutionContext } from "./interfaces/ICommandExecutionContext.js";
 import type { ICommandParseResult } from "./interfaces/ICommandParseResult.js";
 import type { IItemsCommand } from "./interfaces/IItemsCommand.js";
+import type { IServices } from "../services/interfaces/IServices.js";
+import type { IListerStoreService } from "../services/interfaces/IListerStoreService.js";
 import type { ItemsInput, ToolResult } from "../tool-types.js";
-import { getListNameValidationError } from "../store/ListerStore.js";
+import { getListNameValidationError } from "../services/ListerStoreService.js";
 
-function filterItems(items: Awaited<ReturnType<ICommandExecutionContext["store"]["items"]>>, limit?: number) {
+function filterItems(items: Awaited<ReturnType<IListerStoreService["items"]>>, limit?: number) {
   if (!limit || Number.isNaN(limit) || limit < 1) {
     return items;
   }
@@ -16,8 +17,9 @@ function filterItems(items: Awaited<ReturnType<ICommandExecutionContext["store"]
 }
 
 export class ItemsCommand extends BaseCommand<ItemsInput> implements IItemsCommand {
-  constructor() {
+  constructor(services: IServices) {
     super(
+      services,
       "items",
       "Return items from a list, optionally limited.",
       [{ name: "list", type: "string", description: "List name to read from." }],
@@ -54,13 +56,13 @@ export class ItemsCommand extends BaseCommand<ItemsInput> implements IItemsComma
     };
   }
 
-  async execute(parsed: ItemsInput, context: ICommandExecutionContext): Promise<ToolResult> {
-    context.listTypeRegisterService.startupChecks();
+  async execute(parsed: ItemsInput): Promise<ToolResult> {
+    this.services.getListTypeRegisterService().startupChecks();
     const listNameError = getListNameValidationError(parsed.list);
     if (listNameError) {
       return { ok: false, error: listNameError };
     }
-    const items = await context.store.items(parsed.list);
+    const items = await this.services.getListerStoreService().items(parsed.list);
     const selected = filterItems(items, parsed.limit);
     return {
       ok: true,

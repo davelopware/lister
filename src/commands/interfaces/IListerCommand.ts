@@ -1,7 +1,6 @@
 import type { TSchema } from "@sinclair/typebox";
 import type { ToolResult } from "../../tool-types.js";
 import type { ICommandArgument } from "./ICommandArgument.js";
-import type { ICommandExecutionContext } from "./ICommandExecutionContext.js";
 import type { ICommandParseResult } from "./ICommandParseResult.js";
 
 export interface IListerCommand<TParsed = unknown> {
@@ -13,5 +12,5 @@ export interface IListerCommand<TParsed = unknown> {
   getSchema(): TSchema;
   parse(input: unknown): ICommandParseResult<TParsed>;
   buildParseError(result: ICommandParseResult<TParsed>): ToolResult;
-  execute(parsed: TParsed, context: ICommandExecutionContext): Promise<ToolResult>;
+  execute(parsed: TParsed): Promise<ToolResult>;
 }

@@ -1,9 +1,9 @@
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { DEFAULT_LIST_TYPE_NAME, type IListTypeRegisterService, type ListerListType } from "../services/IListTypeRegisterService.js";
-import { ListTypeRegisterService } from "../services/ListTypeRegisterService.js";
+import { DEFAULT_LIST_TYPE_NAME, type IListTypeRegisterService, type ListerListType } from "./interfaces/IListTypeRegisterService.js";
+import { ListTypeRegisterService } from "./ListTypeRegisterService.js";
 import { LISTER_PACKAGE_VERSION } from "../version.js";
-import type { IListerStore, ListFile, ListItem, ListReadResult } from "./IListerStore.js";
+import type { IListerStoreService, ListFile, ListItem, ListReadResult } from "./interfaces/IListerStoreService.js";
 
 const LIST_NAME_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 
@@ -24,11 +24,15 @@ const EMPTY_LIST_FILE: ListFile = {
   items: []
 };
 
-export class ListerStore implements IListerStore {
+export class ListerStoreService implements IListerStoreService {
   constructor(
     private readonly dbDir: string,
     private readonly listTypeRegisterService: IListTypeRegisterService = new ListTypeRegisterService(dbDir)
   ) {}
+
+  getDbPath(): string {
+    return this.dbDir;
+  }
 
   async listNames(): Promise<string[]> {
     try {

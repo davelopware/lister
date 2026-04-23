@@ -1,12 +1,17 @@
 import { Type } from "@sinclair/typebox";
-import type { ICommandRegistry } from "./interfaces/ICommandRegistry.js";
-import type { IListerCommand } from "./interfaces/IListerCommand.js";
+import type { IListerCommand } from "../commands/interfaces/IListerCommand.js";
+import type { ICommandRegisterService } from "./interfaces/ICommandRegisterService.js";
+import type { IServices } from "./interfaces/IServices.js";
 
-export class CommandRegistry implements ICommandRegistry {
+export class CommandRegisterService implements ICommandRegisterService {
   private commands: readonly IListerCommand[] = [];
 
-  constructor(commands: readonly IListerCommand[] = []) {
+  constructor(private readonly services: IServices, commands: readonly IListerCommand[] = []) {
     this.commands = commands;
+  }
+
+  getServices(): IServices {
+    return this.services;
   }
 
   getCommands(): readonly IListerCommand[] {

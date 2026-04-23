@@ -8,14 +8,15 @@ import {
   requireObject
 } from "./helpers/command-parse-helpers.js";
 import type { IAddCommand } from "./interfaces/IAddCommand.js";
-import type { ICommandExecutionContext } from "./interfaces/ICommandExecutionContext.js";
 import type { ICommandParseResult } from "./interfaces/ICommandParseResult.js";
+import type { IServices } from "../services/interfaces/IServices.js";
 import type { AddInput, ToolResult } from "../tool-types.js";
-import { getListNameValidationError } from "../store/ListerStore.js";
+import { getListNameValidationError } from "../services/ListerStoreService.js";
 
 export class AddCommand extends BaseCommand<AddInput> implements IAddCommand {
-  constructor() {
+  constructor(services: IServices) {
     super(
+      services,
       "add",
       "Add an item to a list, optionally inserting at a 1-based position.",
       [
@@ -67,18 +68,20 @@ export class AddCommand extends BaseCommand<AddInput> implements IAddCommand {
     };
   }
 
-  async execute(parsed: AddInput, context: ICommandExecutionContext): Promise<ToolResult> {
-    context.listTypeRegisterService.startupChecks();
+  async execute(parsed: AddInput): Promise<ToolResult> {
+    const listTypeRegisterService = this.services.getListTypeRegisterService();
+    const store = this.services.getListerStoreService();
+    listTypeRegisterService.startupChecks();
     const listNameError = getListNameValidationError(parsed.list);
     if (listNameError) {
       return { ok: false, error: listNameError };
     }
 
-    const info = await context.store.getListInfo(parsed.list);
+    const info = await store.getListInfo(parsed.list);
     try {
-      const item = await context.store.add(
+      const item = await store.add(
         parsed.list,
-        context.listTypeRegisterService.parseItemForListType(info.listType, parsed.data),
+        listTypeRegisterService.parseItemForListType(info.listType, parsed.data),
         parsed.id
       );
       return { ok: true, list_type: info.listType, item };
