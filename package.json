@@ -1,6 +1,6 @@
 {
   "name": "lister",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Simple, fast, opinionated list management for agentic workflows",
   "homepage": "https://github.com/davelopware/lister",
   "license": "MIT",
