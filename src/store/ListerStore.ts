@@ -1,7 +1,9 @@
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { DEFAULT_LIST_TYPE_NAME, getListTypesConfigPath, isListType, listTypeNames, type ListerListType } from "./list-types.js";
-import { LISTER_PACKAGE_VERSION } from "./version.js";
+import { DEFAULT_LIST_TYPE_NAME, type IListTypeRegisterService, type ListerListType } from "../services/IListTypeRegisterService.js";
+import { ListTypeRegisterService } from "../services/ListTypeRegisterService.js";
+import { LISTER_PACKAGE_VERSION } from "../version.js";
+import type { IListerStore, ListFile, ListItem, ListReadResult } from "./IListerStore.js";
 
 const LIST_NAME_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 
@@ -15,20 +17,6 @@ export function getListNameValidationError(listName: string): string | undefined
   return undefined;
 }
 
-export interface ListItem {
-  id: number;
-  createdAt: string;
-  updatedAt: string;
-  data: Record<string, unknown>;
-}
-
-interface ListFile {
-  version: string;
-  description: string;
-  list_type: ListerListType;
-  items: ListItem[];
-}
-
 const EMPTY_LIST_FILE: ListFile = {
   version: LISTER_PACKAGE_VERSION,
   description: "A description of the list",
@@ -36,13 +24,11 @@ const EMPTY_LIST_FILE: ListFile = {
   items: []
 };
 
-interface ListReadResult {
-  exists: boolean;
-  list: ListFile;
-}
-
-export class ListerStore {
-  constructor(private readonly dbDir: string) {}
+export class ListerStore implements IListerStore {
+  constructor(
+    private readonly dbDir: string,
+    private readonly listTypeRegisterService: IListTypeRegisterService = new ListTypeRegisterService(dbDir)
+  ) {}
 
   async listNames(): Promise<string[]> {
     try {
@@ -235,10 +221,10 @@ export class ListerStore {
     if (typeof asList.description !== "string") {
       throw new Error("Invalid list description");
     }
-    if (typeof asList.list_type !== "string" || !(await isListType(asList.list_type, this.dbDir))) {
+    if (typeof asList.list_type !== "string" || !this.listTypeRegisterService.isListType(asList.list_type)) {
       throw new Error(
-        `Invalid list_type: ${String(asList.list_type)}. Available types: ${(await listTypeNames(this.dbDir)).join(", ")}. ` +
-          `Custom types can be defined in ${getListTypesConfigPath(this.dbDir)}`
+        `Invalid list_type: ${String(asList.list_type)}. Available types: ${this.listTypeRegisterService.listTypeNames().join(", ")}. ` +
+          `Custom types can be defined in ${this.listTypeRegisterService.getListTypesConfigPath()}`
       );
     }
     if (!Array.isArray(asList.items) || !asList.items.every((item) => this.isListItem(item))) {

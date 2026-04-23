@@ -148,40 +148,42 @@ Example custom schema file shape:
 Refactor the command surface so each command is represented by its own class, with the class owning the command name, description, parameter definitions,
 argument parsing/validation, parse-error response building, and execution logic.
 
-- [ ] Create interface files first, each in its own file with an `I` prefix.
+- [x] Create interface files first, each in its own file with an `I` prefix.
   - Examples: `IListerCommand.ts`, `ICommandRegistry.ts`, `ICommandParseResult.ts`, `ICommandExecutionContext.ts`, `IShowCommandsCommand.ts`, `ICreateCommand.ts`.
   - Each concrete class should live in its own matching non-`I` file, for example `ShowCommandsCommand.ts` implementing `IShowCommandsCommand`.
+  - Store contracts now also live under `src/store/`, with `IListerStore.ts` and `ListerStore.ts`.
 
-- [ ] Define a base command contract.
+- [x] Define a base command contract.
   - `IListerCommand<TParsed>` should cover command identity, `canHandle(commandName: string): boolean`, command metadata, parameter metadata, `parse`, parse-error response building, and `execute`.
 
-- [ ] Add a command registry class and interface.
+- [x] Add a command registry class and interface.
   - `ICommandRegistry` should live in its own file.
   - `CommandRegistry` should hold ordered command instances and iterate through them, asking `canHandle()` until one matches.
   - `CommandRegistry` should generate the OpenClaw schema from command class metadata.
   - `ShowCommandsCommand` and `CommandArgsCommand` should receive `ICommandRegistry` in their constructors so they can interrogate it.
 
-- [ ] Move each command into its own class file.
+- [x] Move each command into its own class file.
   - One file per command: `ShowCommandsCommand`, `CommandArgsCommand`, `ShowListTypesCommand`, `ListTypeSchemaCommand`, `CreateCommand`, `ListsCommand`, `AddCommand`, `ItemsCommand`, `RemoveCommand`, `UpdateCommand`, `ClearCommand`, `StatusCommand`.
   - Do not keep support for legacy command names; each command class should only accept its current command name.
 
-- [ ] Keep shared helpers outside command classes.
+- [x] Keep shared helpers outside command classes.
   - Shared parsing helpers, response builders, and runtime context helpers should live outside the commands.
   - `ListerStore` should remain a class wrapping access to the store files, not command metadata or command parsing.
 
-- [ ] Keep `ListerStore` responsible for persisted list-file parsing, not typed command payload parsing.
+- [x] Keep `ListerStore` responsible for persisted list-file parsing, not typed command payload parsing.
   - `ListerStore` should read/write list files, validate stored file structure, and provide basic list/item persistence operations.
   - Typed `add` / `update` payload parsing against list-type schemas should remain in a separate shared service/helper layer.
 
-- [ ] Refactor `plugin-tool.ts` into a thin adapter.
+- [x] Refactor `plugin-tool.ts` into a thin adapter.
   - It should resolve runtime context, extract the command name, ask the registry to find a handler, call `parse`, return command-built parse errors on failure, and call `execute` on success.
   - The OpenClaw schema should come from the registry rather than hardcoded per-action branches in `plugin-tool.ts`.
 
 - [ ] Remove duplicated command metadata after migration.
   - Command name, description, and argument definitions should live only in command classes.
   - `showCommands`, `commandArgs`, and OpenClaw schema generation should all derive from the command registry and command instances.
+  - Runtime command dispatch and OpenClaw schema now derive from command classes; published manifest/docs still duplicate command descriptions and argument docs.
 
-- [ ] Migrate incrementally.
+- [x] Migrate incrementally.
   - Phase 1: interfaces, registry, shared helpers, and command execution context.
   - Phase 2: implement introspection commands first.
   - Phase 3: migrate CRUD commands one by one.

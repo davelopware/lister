@@ -233,6 +233,7 @@ test("package contract: runtime deps and SDK subpath import stay aligned", async
   const lock = JSON.parse(await readFile(new URL("../package-lock.json", import.meta.url), "utf8"));
   const builtEntry = await readFile(new URL("../dist/index.js", import.meta.url), "utf8");
   const builtTool = await readFile(new URL("../dist/plugin-tool.js", import.meta.url), "utf8");
+  const builtCommand = await readFile(new URL("../dist/commands/CreateCommand.js", import.meta.url), "utf8");
   const productionPackages = collectProductionPackages(lock);
 
   assert.equal(pkg.dependencies["@sinclair/typebox"], "^0.34.49");
@@ -259,7 +260,8 @@ test("package contract: runtime deps and SDK subpath import stay aligned", async
     minHostVersion: ">=2026.4.15"
   });
   assert.match(builtEntry, /openclaw\/plugin-sdk\/plugin-entry/);
-  assert.match(builtTool, /@sinclair\/typebox/);
+  assert.match(builtTool, /createDefaultCommandRegistry/);
+  assert.match(builtCommand, /@sinclair\/typebox/);
 });
 
 test("package layout: publish shape matches native plugin expectations", async () => {
