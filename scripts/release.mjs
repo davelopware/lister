@@ -31,6 +31,10 @@ function runCapture(command, args) {
   }).trim();
 }
 
+function trackedGitStatus() {
+  return runCapture("git", ["status", "--short", "--untracked-files=no"]);
+}
+
 async function exists(path) {
   try {
     await access(path, constants.F_OK);
@@ -72,9 +76,20 @@ if (typeof currentPackageVersion !== "string" || currentPackageVersion.trim() ==
 const tag = `v${requestedVersion}`;
 const tarballName = `lister-${requestedVersion}.tgz`;
 const tarballPath = resolve(rootDir, tarballName);
+const packageLockPath = resolve(rootDir, "package-lock.json");
 
 let localTagExists = false;
 let remoteTagExists = false;
+
+const currentBranch = runCapture("git", ["rev-parse", "--abbrev-ref", "HEAD"]);
+if (currentBranch === "HEAD") {
+  throw new Error("release must be run from a branch, not a detached HEAD");
+}
+
+const initialTrackedStatus = trackedGitStatus();
+if (initialTrackedStatus !== "") {
+  throw new Error(`release requires a clean tracked git worktree:\n${initialTrackedStatus}`);
+}
 
 // Refuse to silently replace an existing release tag.
 try {
@@ -125,18 +140,32 @@ if (packageVersion !== requestedVersion) {
   throw new Error(`version update failed: requested=${requestedVersion} package.json=${packageVersion}`);
 }
 
-// Build the release artifact before pushing or publishing anything.
-console.log(`Creating release for ${packageVersion}`);
+const filesToCommit = ["package.json"];
+if (await exists(packageLockPath)) {
+  filesToCommit.push("package-lock.json");
+}
 
-run("git", ["tag", tag]);
+console.log(`Committing version bump for ${packageVersion}`);
+run("git", ["add", ...filesToCommit]);
+run("git", ["commit", "-m", `release: ${tag}`]);
+
+// Build the release artifact before pushing or publishing anything.
+console.log(`Packing release for ${packageVersion}`);
+
 run("npm", ["pack"]);
 
 if (!(await exists(tarballPath))) {
   throw new Error(`expected package artifact was not created: ${tarballName}`);
 }
 
+const postPackTrackedStatus = trackedGitStatus();
+if (postPackTrackedStatus !== "") {
+  throw new Error(`npm pack changed tracked files; commit or revert them before releasing:\n${postPackTrackedStatus}`);
+}
+
 // Only publish once the version, tag, and tarball are all aligned.
-run("git", ["push", "origin", tag]);
+run("git", ["tag", tag]);
+run("git", ["push", "origin", `HEAD:${currentBranch}`, tag]);
 run("gh", [
   "release",
   "create",

@@ -186,6 +186,6 @@ Release flow:
 npm run release -- <x.y.z>
 ```
 
-`release` updates `package.json` to the requested version, creates the git tag, runs `npm pack` (which also runs the test/build flow through `prepack`), verifies the tarball exists, pushes the tag, and creates the GitHub release.
+`release` requires a clean tracked worktree, updates `package.json` to the requested version, commits the version bump before tagging, runs `npm pack` (which also runs the test/build flow through `prepack`), verifies the tarball exists, confirms `prepack` did not modify tracked files, pushes the branch and tag, and then creates the GitHub release.
 
 Tests live in `test/integration.test.mjs` and validate file schema plus core list lifecycle behavior.
