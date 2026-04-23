@@ -31,9 +31,11 @@ npm run build
 Then import from the compiled output:
 
 ```ts
-import { add, create, items, listTypes, lists, status, update } from "./dist/tool.js";
+import { add, create, items, listTypeSchema, lists, showCommands, showListTypes, status, update } from "./dist/tool.js";
 
-const supported = await listTypes();
+const commands = await showCommands();
+const supported = await showListTypes();
+const todoSchema = await listTypeSchema({ listTypeName: "todos" });
 
 await create({
   list: "tasks",
@@ -65,7 +67,10 @@ const summary = await status();
 
 Supported operations:
 
-- `listTypes()`
+- `showCommands()`
+- `commandArgs(input)`
+- `showListTypes()`
+- `listTypeSchema(input)`
 - `create(input)`
 - `lists()`
 - `add(input)`
@@ -102,7 +107,8 @@ Each list is stored in its own JSON file. Every list file has this root schema:
 
 ## List Types
 
-`listTypes()` is the source of truth for the active merged registry of built-in and user-defined types.
+Use `showListTypes()` to list available list type names and descriptions.
+Use `listTypeSchema({ listTypeName })` to inspect the fields for a specific list type.
 
 - `general`: each item must be `{ "text": string }`
 - `todos`: each item must be `{ "text": string, "due": datetime, "status": string }`

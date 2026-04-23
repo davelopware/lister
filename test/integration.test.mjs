@@ -69,23 +69,71 @@ function collectProductionPackages(lock) {
   return resolved.sort((left, right) => left.name.localeCompare(right.name));
 }
 
-test("listTypes(): returns all supported types with metadata", async () => {
-  const result = await lister.listTypes();
+test("showCommands(): returns the available commands with descriptions", async () => {
+  const result = await lister.showCommands();
+  assert.equal(result.ok, true);
+  assert.equal(result.count, 12);
+
+  const names = result.commands.map((entry) => entry.name).sort();
+  assert.deepEqual(names, [
+    "add",
+    "clear",
+    "commandArgs",
+    "create",
+    "items",
+    "listTypeSchema",
+    "lists",
+    "remove",
+    "showCommands",
+    "showListTypes",
+    "status",
+    "update"
+  ]);
+
+  const add = result.commands.find((entry) => entry.name === "add");
+  assert.equal(!!add, true);
+  assert.match(add.description, /Add an item/);
+});
+
+test("commandArgs(): returns required and optional args for a command", async () => {
+  const result = await lister.commandArgs({ commandName: "add" });
+  assert.equal(result.ok, true);
+  assert.equal(result.commandName, "add");
+  assert.deepEqual(
+    result.requiredArgs.map((entry) => entry.name),
+    ["list", "data"]
+  );
+  assert.deepEqual(
+    result.optionalArgs.map((entry) => entry.name),
+    ["id"]
+  );
+});
+
+test("showListTypes(): returns all supported type names with descriptions only", async () => {
+  const result = await lister.showListTypes();
   assert.equal(result.ok, true);
   assert.equal(result.count, 7);
 
-  const names = result.types.map((entry) => entry.name).sort();
+  const names = result.listTypes.map((entry) => entry.name).sort();
   assert.deepEqual(names, ["general", "habits", "health-log", "people", "shopping-items", "todos", "waiting-on"]);
 
-  const todos = result.types.find((entry) => entry.name === "todos");
+  const todos = result.listTypes.find((entry) => entry.name === "todos");
   assert.equal(!!todos, true);
+  assert.equal(typeof todos.description, "string");
+  assert.equal("fields" in todos, false);
+});
+
+test("listTypeSchema(): returns the field schema for one list type", async () => {
+  const result = await lister.listTypeSchema({ listTypeName: "todos" });
+  assert.equal(result.ok, true);
+  assert.equal(result.listTypeName, "todos");
   assert.deepEqual(
-    todos.fields.map((field) => field.name),
+    result.fields.map((field) => field.name),
     ["text", "due", "status"]
   );
 });
 
-test("listTypes(): merges custom types from store config", async () => {
+test("showListTypes(): merges custom types from store config", async () => {
   await withTempStore(async (context, dbPath) => {
     await writeListTypesConfig(dbPath, {
       types: [
@@ -101,15 +149,13 @@ test("listTypes(): merges custom types from store config", async () => {
       ]
     });
 
-    const result = await lister.listTypes(context);
+    const result = await lister.showListTypes(context);
     assert.equal(result.ok, true);
     assert.equal(result.count, 8);
 
-    const vendors = result.types.find((entry) => entry.name === "vendors");
-    assert.deepEqual(
-      vendors.fields.map((field) => field.name),
-      ["name", "owner", "renewal_date"]
-    );
+    const vendors = result.listTypes.find((entry) => entry.name === "vendors");
+    assert.equal(vendors.name, "vendors");
+    assert.equal(typeof vendors.description, "string");
   });
 });
 
@@ -457,7 +503,7 @@ test("custom list types: duplicate names fail fast", async () => {
     });
 
     await assert.rejects(
-      () => lister.listTypes(context),
+      () => lister.showListTypes(context),
       /Duplicate list type "todos"/
     );
   });
@@ -468,7 +514,7 @@ test("custom list types: malformed config fails clearly", async () => {
     await writeRawListTypesConfig(dbPath, "{\n  \"types\": [\n");
 
     await assert.rejects(
-      () => lister.listTypes(context),
+      () => lister.showListTypes(context),
       /Invalid list type config at .*custom-list-types\.json:/
     );
   });

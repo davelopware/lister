@@ -54,6 +54,10 @@
   - Support updating the stored `description` for a named list without recreating it.
   - Expose the capability through the tool contract alongside the other list management actions.
 
+- [ ] Add a command to remove a list entirely.
+  - Support deleting a named list and all of its stored items in one operation.
+  - Expose the capability through the tool contract as a distinct destructive action with clear confirmation-oriented messaging.
+
 - [ ] Add a search facility for list items.
   - Decide whether this should be an optional `search` parameter on `items` or a separate `search` command.
   - Start with simple text matching across any item field within a single list.

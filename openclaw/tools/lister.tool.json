@@ -1,11 +1,14 @@
 {
   "name": "lister",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Simple, fast, efficient, opinionated list management for agentic AI",
   "runtime": "node",
   "entrypoint": "dist/tool.js",
   "handlers": {
-    "listTypes": "listTypes",
+    "showCommands": "showCommands",
+    "commandArgs": "commandArgs",
+    "showListTypes": "showListTypes",
+    "listTypeSchema": "listTypeSchema",
     "create": "create",
     "lists": "lists",
     "add": "add",
@@ -26,13 +29,32 @@
     "style": "direct-function",
     "functions": [
       {
-        "name": "listTypes",
-        "description": "List active built-in and custom list types with purpose and fields",
+        "name": "showCommands",
+        "description": "Show the available commands and describe what each command does",
         "args": {}
       },
       {
+        "name": "commandArgs",
+        "description": "Show the required and optional arguments for a specific command",
+        "args": {
+          "commandName": "string"
+        }
+      },
+      {
+        "name": "showListTypes",
+        "description": "List the available built-in and custom list types with their descriptions",
+        "args": {}
+      },
+      {
+        "name": "listTypeSchema",
+        "description": "Show the fields for a specific list type",
+        "args": {
+          "listTypeName": "string"
+        }
+      },
+      {
         "name": "create",
-        "description": "Create a list with optional type and description. Use listTypes first to discover valid listType names.",
+        "description": "Create a list with optional type and description. Use showListTypes first to discover valid listType names.",
         "args": {
           "list": "string",
           "listType": "string?",
