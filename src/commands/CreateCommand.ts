@@ -1,35 +1,33 @@
 import { Type } from "@sinclair/typebox";
 import { BaseCommand } from "./base/BaseCommand.js";
-import { createActionSchema } from "./helpers/command-schema-helpers.js";
-import { readOptionalString, readRequiredString, requireObject } from "./helpers/command-parse-helpers.js";
+import { commandArg } from "./helpers/commandSchemaHelpers.js";
+import { readOptionalString, readRequiredString, requireObject } from "./helpers/commandParseHelpers.js";
 import type { ICommandParseResult } from "./interfaces/ICommandParseResult.js";
 import type { ICreateCommand } from "./interfaces/ICreateCommand.js";
 import type { IServices } from "../services/interfaces/IServices.js";
-import type { CreateInput, ToolResult } from "../tool-types.js";
+import type { CreateInput, ToolResult } from "../toolTypes.js";
 import { getListNameValidationError } from "../services/ListerStoreService.js";
+
+const CREATE_COMMAND_SETUP = {
+  name: "create",
+  description: "Create a list with an optional type and description.",
+  requiredArgs: [commandArg("list", "string", "List name to create.", (description) => Type.String({ minLength: 1, description }))],
+  optionalArgs: [
+    commandArg(
+      "listType",
+      "string",
+      "List type name for the new list. Use showListTypes to discover built-in and custom values.",
+      (description) => Type.String({ minLength: 1, description })
+    ),
+    commandArg("description", "string", "Human-readable description for the list.", (description) =>
+      Type.String({ description })
+    )
+  ]
+} as const;
 
 export class CreateCommand extends BaseCommand<CreateInput> implements ICreateCommand {
   constructor(services: IServices) {
-    super(
-      services,
-      "create",
-      "Create a list with an optional type and description.",
-      [{ name: "list", type: "string", description: "List name to create." }],
-      [
-        { name: "listType", type: "string", description: "List type name for the new list." },
-        { name: "description", type: "string", description: "Human-readable description for the list." }
-      ]
-    );
-  }
-
-  getSchema() {
-    return createActionSchema(this.name, {
-      list: Type.String({ minLength: 1, description: "List name for create." }),
-      listType: Type.Optional(
-        Type.String({ minLength: 1, description: "List type name for create. Use showListTypes to discover built-in and custom values." })
-      ),
-      description: Type.Optional(Type.String({ description: "Optional human-readable list description for create." }))
-    });
+    super(services, CREATE_COMMAND_SETUP);
   }
 
   parse(input: unknown): ICommandParseResult<CreateInput> {

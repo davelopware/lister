@@ -1,26 +1,25 @@
 import { Type } from "@sinclair/typebox";
 import { BaseCommand } from "./base/BaseCommand.js";
-import { createActionSchema } from "./helpers/command-schema-helpers.js";
-import { parseRequiredString } from "./helpers/command-parse-helpers.js";
+import { commandArg } from "./helpers/commandSchemaHelpers.js";
+import { parseRequiredString } from "./helpers/commandParseHelpers.js";
 import type { ICommandArgsCommand } from "./interfaces/ICommandArgsCommand.js";
 import type { ICommandParseResult } from "./interfaces/ICommandParseResult.js";
 import type { IServices } from "../services/interfaces/IServices.js";
-import type { CommandArgsInput, ToolResult } from "../tool-types.js";
+import type { CommandArgsInput, ToolResult } from "../toolTypes.js";
+
+const COMMAND_ARGS_COMMAND_SETUP = {
+  name: "commandArgs",
+  description: "Show the required and optional arguments for a specific command.",
+  requiredArgs: [
+    commandArg("commandName", "string", "Name of the command to show the arguments for.", (description) =>
+      Type.String({ minLength: 1, description })
+    )
+  ]
+} as const;
 
 export class CommandArgsCommand extends BaseCommand<CommandArgsInput> implements ICommandArgsCommand {
   constructor(services: IServices) {
-    super(
-      services,
-      "commandArgs",
-      "Show the required and optional arguments for a specific command.",
-      [{ name: "commandName", type: "string", description: "Name of the command to show the arguments for." }]
-    );
-  }
-
-  getSchema() {
-    return createActionSchema(this.name, {
-      commandName: Type.String({ minLength: 1, description: "Command name for the `commandArgs` action." })
-    });
+    super(services, COMMAND_ARGS_COMMAND_SETUP);
   }
 
   parse(input: unknown): ICommandParseResult<CommandArgsInput> {

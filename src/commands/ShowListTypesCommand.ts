@@ -1,17 +1,17 @@
 import { BaseCommand } from "./base/BaseCommand.js";
-import { createActionSchema } from "./helpers/command-schema-helpers.js";
-import { parseNoArgs } from "./helpers/command-parse-helpers.js";
+import { parseNoArgs } from "./helpers/commandParseHelpers.js";
 import type { IShowListTypesCommand } from "./interfaces/IShowListTypesCommand.js";
 import type { IServices } from "../services/interfaces/IServices.js";
-import type { ToolResult } from "../tool-types.js";
+import type { ToolResult } from "../toolTypes.js";
+
+const SHOW_LIST_TYPES_COMMAND_SETUP = {
+  name: "showListTypes",
+  description: "Show the available list types and their descriptions."
+} as const;
 
 export class ShowListTypesCommand extends BaseCommand<Record<string, never>> implements IShowListTypesCommand {
   constructor(services: IServices) {
-    super(services, "showListTypes", "Show the available list types and their descriptions.");
-  }
-
-  getSchema() {
-    return createActionSchema(this.name);
+    super(services, SHOW_LIST_TYPES_COMMAND_SETUP);
   }
 
   parse(input: unknown) {

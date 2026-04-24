@@ -1,44 +1,33 @@
 import { Type } from "@sinclair/typebox";
 import { BaseCommand } from "./base/BaseCommand.js";
-import { createActionSchema } from "./helpers/command-schema-helpers.js";
+import { commandArg } from "./helpers/commandSchemaHelpers.js";
 import {
   readRequiredObject,
   readRequiredPositiveInt,
   readRequiredString,
   requireObject
-} from "./helpers/command-parse-helpers.js";
+} from "./helpers/commandParseHelpers.js";
 import type { ICommandParseResult } from "./interfaces/ICommandParseResult.js";
 import type { IUpdateCommand } from "./interfaces/IUpdateCommand.js";
 import type { IServices } from "../services/interfaces/IServices.js";
-import type { ToolResult, UpdateInput } from "../tool-types.js";
+import type { ToolResult, UpdateInput } from "../toolTypes.js";
 import { getListNameValidationError } from "../services/ListerStoreService.js";
+
+const UPDATE_COMMAND_SETUP = {
+  name: "update",
+  description: "Replace an existing item in a list by its 1-based position id.",
+  requiredArgs: [
+    commandArg("list", "string", "List name to update.", (description) => Type.String({ minLength: 1, description })),
+    commandArg("id", "number", "1-based item id to update.", (description) => Type.Integer({ minimum: 1, description })),
+    commandArg("data", "object", "Full item payload that matches the list type schema.", (description) =>
+      Type.Object({}, { additionalProperties: true, description })
+    )
+  ]
+} as const;
 
 export class UpdateCommand extends BaseCommand<UpdateInput> implements IUpdateCommand {
   constructor(services: IServices) {
-    super(
-      services,
-      "update",
-      "Replace an existing item in a list by its 1-based position id.",
-      [
-        { name: "list", type: "string", description: "List name to update." },
-        { name: "id", type: "number", description: "1-based item id to update." },
-        { name: "data", type: "object", description: "Full item payload that matches the list type schema." }
-      ]
-    );
-  }
-
-  getSchema() {
-    return createActionSchema(this.name, {
-      list: Type.String({ minLength: 1, description: "List name for update." }),
-      id: Type.Integer({ minimum: 1, description: "1-based item id for update." }),
-      data: Type.Object(
-        {},
-        {
-          additionalProperties: true,
-          description: "Item payload for update. Shape depends on the target list type."
-        }
-      )
-    });
+    super(services, UPDATE_COMMAND_SETUP);
   }
 
   parse(input: unknown): ICommandParseResult<UpdateInput> {

@@ -6,10 +6,10 @@
  *
  * Relative to the rest of the Lister entry-point files, this file sits at the
  * top: it re-exports the public API and types, while delegating actual tool
- * construction to `plugin-tool.ts`.
+ * construction to `pluginTool.ts`.
  */
 import { definePluginEntry, type OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
-import { createListerTool } from "./plugin-tool.js";
+import { createListerTool } from "./pluginTool.js";
 
 export { ListerStoreService, getListNameValidationError } from "./services/ListerStoreService.js";
 export type { IListerStoreService, ListFile, ListItem, ListReadResult } from "./services/interfaces/IListerStoreService.js";

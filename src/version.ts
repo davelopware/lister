@@ -6,7 +6,7 @@
  *
  * Relative to the other entry-point files, this file stays intentionally
  * narrow: it only resolves the package version, while `tool.ts` and
- * `plugin-tool.ts` decide when that version should be exposed.
+ * `pluginTool.ts` decide when that version should be exposed.
  */
 import { createRequire } from "node:module";
 

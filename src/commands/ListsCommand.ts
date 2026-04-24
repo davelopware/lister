@@ -1,17 +1,17 @@
 import { BaseCommand } from "./base/BaseCommand.js";
-import { createActionSchema } from "./helpers/command-schema-helpers.js";
-import { parseNoArgs } from "./helpers/command-parse-helpers.js";
+import { parseNoArgs } from "./helpers/commandParseHelpers.js";
 import type { IListsCommand } from "./interfaces/IListsCommand.js";
 import type { IServices } from "../services/interfaces/IServices.js";
-import type { ToolResult } from "../tool-types.js";
+import type { ToolResult } from "../toolTypes.js";
+
+const LISTS_COMMAND_SETUP = {
+  name: "lists",
+  description: "List all known lists with their type and description."
+} as const;
 
 export class ListsCommand extends BaseCommand<Record<string, never>> implements IListsCommand {
   constructor(services: IServices) {
-    super(services, "lists", "List all known lists with their type and description.");
-  }
-
-  getSchema() {
-    return createActionSchema(this.name);
+    super(services, LISTS_COMMAND_SETUP);
   }
 
   parse(input: unknown) {

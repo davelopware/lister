@@ -6,8 +6,8 @@
  * functions, and dispatches commands through the command register service.
  *
  * Relative to the other entry-point files:
- * - `plugin-tool.ts` wraps this surface for OpenClaw plugin execution
- * - `tool-types.ts` defines the shared command/result shapes used here
+ * - `pluginTool.ts` wraps this surface for OpenClaw plugin execution
+ * - `toolTypes.ts` defines the shared command/result shapes used here
  * - `index.ts` re-exports this API as part of the package public surface
  */
 import { AddCommand } from "./commands/AddCommand.js";
@@ -40,7 +40,7 @@ import type {
   ToolContext,
   ToolResult,
   UpdateInput
-} from "./tool-types.js";
+} from "./toolTypes.js";
 
 export function configureServices(services: IServices, dbPath: string): IServices {
   const listTypeRegisterService = new ListTypeRegisterService(dbPath);
@@ -155,4 +155,4 @@ export type {
   ToolContext,
   ToolResult,
   UpdateInput
-} from "./tool-types.js";
+} from "./toolTypes.js";

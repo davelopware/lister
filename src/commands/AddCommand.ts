@@ -1,44 +1,48 @@
 import { Type } from "@sinclair/typebox";
 import { BaseCommand } from "./base/BaseCommand.js";
-import { createActionSchema } from "./helpers/command-schema-helpers.js";
+import { commandArg } from "./helpers/commandSchemaHelpers.js";
 import {
   readOptionalPositiveInt,
   readRequiredObject,
   readRequiredString,
   requireObject
-} from "./helpers/command-parse-helpers.js";
+} from "./helpers/commandParseHelpers.js";
 import type { IAddCommand } from "./interfaces/IAddCommand.js";
 import type { ICommandParseResult } from "./interfaces/ICommandParseResult.js";
 import type { IServices } from "../services/interfaces/IServices.js";
-import type { AddInput, ToolResult } from "../tool-types.js";
+import type { AddInput, ToolResult } from "../toolTypes.js";
 import { getListNameValidationError } from "../services/ListerStoreService.js";
+
+const ADD_COMMAND_SETUP = {
+  name: "add",
+  description: "Add an item to a list, optionally inserting at a 1-based position.",
+  requiredArgs: [
+    commandArg(
+      "list",
+      "string",
+      "List name to add the item to.",
+      (description) => Type.String({ minLength: 1, description })
+    ),
+    commandArg(
+      "data",
+      "object",
+      "Item payload that matches the list type schema.",
+      (description) => Type.Object({}, { additionalProperties: true, description })
+    )
+  ],
+  optionalArgs: [
+    commandArg(
+      "id",
+      "number",
+      "1-based position to insert at. If omitted, append to the end.",
+      (description) => Type.Integer({ minimum: 1, description })
+    )
+  ]
+} as const;
 
 export class AddCommand extends BaseCommand<AddInput> implements IAddCommand {
   constructor(services: IServices) {
-    super(
-      services,
-      "add",
-      "Add an item to a list, optionally inserting at a 1-based position.",
-      [
-        { name: "list", type: "string", description: "List name to add the item to." },
-        { name: "data", type: "object", description: "Item payload that matches the list type schema." }
-      ],
-      [{ name: "id", type: "number", description: "1-based position to insert at. If omitted, append to the end." }]
-    );
-  }
-
-  getSchema() {
-    return createActionSchema(this.name, {
-      list: Type.String({ minLength: 1, description: "List name for add." }),
-      id: Type.Optional(Type.Integer({ minimum: 1, description: "1-based item id for add insertions." })),
-      data: Type.Object(
-        {},
-        {
-          additionalProperties: true,
-          description: "Item payload for add. Shape depends on the target list type."
-        }
-      )
-    });
+    super(services, ADD_COMMAND_SETUP);
   }
 
   parse(input: unknown): ICommandParseResult<AddInput> {

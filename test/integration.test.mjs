@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import * as lister from "../dist/tool.js";
 import pluginEntry, { LISTER_PACKAGE_VERSION } from "../dist/index.js";
-import { createListerTool } from "../dist/plugin-tool.js";
+import { createListerTool } from "../dist/pluginTool.js";
 
 const listerVersion = LISTER_PACKAGE_VERSION;
 
@@ -232,7 +232,7 @@ test("package contract: runtime deps and SDK subpath import stay aligned", async
   const pkg = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
   const lock = JSON.parse(await readFile(new URL("../package-lock.json", import.meta.url), "utf8"));
   const builtEntry = await readFile(new URL("../dist/index.js", import.meta.url), "utf8");
-  const builtTool = await readFile(new URL("../dist/plugin-tool.js", import.meta.url), "utf8");
+  const builtTool = await readFile(new URL("../dist/pluginTool.js", import.meta.url), "utf8");
   const builtCommand = await readFile(new URL("../dist/commands/CreateCommand.js", import.meta.url), "utf8");
   const productionPackages = collectProductionPackages(lock);
 

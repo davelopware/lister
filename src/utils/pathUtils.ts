@@ -1,6 +1,6 @@
 import { access } from "node:fs/promises";
 import { resolve } from "node:path";
-import type { ToolContext } from "../tool-types.js";
+import type { ToolContext } from "../toolTypes.js";
 
 export function resolveDbPath(context?: ToolContext): string {
   if (context?.dbPath && context.dbPath.trim() !== "") {

@@ -7,12 +7,12 @@
  *
  * Relative to the other entry-point files:
  * - `tool.ts` owns concrete service bootstrap and command execution
- * - `tool-types.ts` defines the shared shapes used here
+ * - `toolTypes.ts` defines the shared shapes used here
  * - `index.ts` publishes this adapter as the plugin's registered tool
  */
 import { join, resolve } from "node:path";
 import type { OpenClawPluginToolContext } from "openclaw/plugin-sdk/plugin-entry";
-import type { ToolContext, ToolResult } from "./tool-types.js";
+import type { ToolContext, ToolResult } from "./toolTypes.js";
 import { configureServices } from "./tool.js";
 import { Services } from "./services/Services.js";
 

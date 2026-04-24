@@ -174,9 +174,9 @@ argument parsing/validation, parse-error response building, and execution logic.
   - `ListerStore` should read/write list files, validate stored file structure, and provide basic list/item persistence operations.
   - Typed `add` / `update` payload parsing against list-type schemas should remain in a separate shared service/helper layer.
 
-- [x] Refactor `plugin-tool.ts` into a thin adapter.
+- [x] Refactor `pluginTool.ts` into a thin adapter.
   - It should resolve runtime context, extract the command name, ask the registry to find a handler, call `parse`, return command-built parse errors on failure, and call `execute` on success.
-  - The OpenClaw schema should come from the registry rather than hardcoded per-action branches in `plugin-tool.ts`.
+  - The OpenClaw schema should come from the registry rather than hardcoded per-action branches in `pluginTool.ts`.
 
 - [ ] Remove duplicated command metadata after migration.
   - Command name, description, and argument definitions should live only in command classes.

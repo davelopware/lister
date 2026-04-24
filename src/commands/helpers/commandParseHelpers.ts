@@ -1,5 +1,5 @@
 import type { ICommandParseResult } from "../interfaces/ICommandParseResult.js";
-import { parseFailure, parseSuccess } from "./command-parse-results.js";
+import { parseFailure, parseSuccess } from "./commandParseResults.js";
 
 export function asObjectRecord(value: unknown): Record<string, unknown> | undefined {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {

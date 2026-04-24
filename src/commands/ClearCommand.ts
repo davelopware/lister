@@ -1,31 +1,27 @@
 import { Type } from "@sinclair/typebox";
 import { BaseCommand } from "./base/BaseCommand.js";
-import { createActionSchema } from "./helpers/command-schema-helpers.js";
-import { readRequiredString, readRequiredTrue, requireObject } from "./helpers/command-parse-helpers.js";
+import { commandArg } from "./helpers/commandSchemaHelpers.js";
+import { readRequiredString, readRequiredTrue, requireObject } from "./helpers/commandParseHelpers.js";
 import type { IClearCommand } from "./interfaces/IClearCommand.js";
 import type { ICommandParseResult } from "./interfaces/ICommandParseResult.js";
 import type { IServices } from "../services/interfaces/IServices.js";
-import type { ClearInput, ToolResult } from "../tool-types.js";
+import type { ClearInput, ToolResult } from "../toolTypes.js";
 import { getListNameValidationError } from "../services/ListerStoreService.js";
+
+const CLEAR_COMMAND_SETUP = {
+  name: "clear",
+  description: "Remove all items from a list.",
+  requiredArgs: [
+    commandArg("list", "string", "List name to clear.", (description) => Type.String({ minLength: 1, description })),
+    commandArg("confirm", "boolean", "Must be true to confirm the destructive clear.", (description) =>
+      Type.Boolean({ description })
+    )
+  ]
+} as const;
 
 export class ClearCommand extends BaseCommand<ClearInput> implements IClearCommand {
   constructor(services: IServices) {
-    super(
-      services,
-      "clear",
-      "Remove all items from a list.",
-      [
-        { name: "list", type: "string", description: "List name to clear." },
-        { name: "confirm", type: "boolean", description: "Must be true to confirm the destructive clear." }
-      ]
-    );
-  }
-
-  getSchema() {
-    return createActionSchema(this.name, {
-      list: Type.String({ minLength: 1, description: "List name for clear." }),
-      confirm: Type.Boolean({ description: "Required true for clear." })
-    });
+    super(services, CLEAR_COMMAND_SETUP);
   }
 
   parse(input: unknown): ICommandParseResult<ClearInput> {

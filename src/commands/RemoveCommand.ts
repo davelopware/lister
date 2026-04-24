@@ -1,31 +1,29 @@
 import { Type } from "@sinclair/typebox";
 import { BaseCommand } from "./base/BaseCommand.js";
-import { createActionSchema } from "./helpers/command-schema-helpers.js";
-import { readRequiredPositiveInt, readRequiredString, requireObject } from "./helpers/command-parse-helpers.js";
+import { commandArg } from "./helpers/commandSchemaHelpers.js";
+import { readRequiredPositiveInt, readRequiredString, requireObject } from "./helpers/commandParseHelpers.js";
 import type { ICommandParseResult } from "./interfaces/ICommandParseResult.js";
 import type { IRemoveCommand } from "./interfaces/IRemoveCommand.js";
 import type { IServices } from "../services/interfaces/IServices.js";
-import type { ItemRefInput, ToolResult } from "../tool-types.js";
+import type { ItemRefInput, ToolResult } from "../toolTypes.js";
 import { getListNameValidationError } from "../services/ListerStoreService.js";
+
+const REMOVE_COMMAND_SETUP = {
+  name: "remove",
+  description: "Remove an item from a list by its 1-based position id.",
+  requiredArgs: [
+    commandArg("list", "string", "List name to remove the item from.", (description) =>
+      Type.String({ minLength: 1, description })
+    ),
+    commandArg("id", "number", "1-based item id to remove.", (description) =>
+      Type.Integer({ minimum: 1, description })
+    )
+  ]
+} as const;
 
 export class RemoveCommand extends BaseCommand<ItemRefInput> implements IRemoveCommand {
   constructor(services: IServices) {
-    super(
-      services,
-      "remove",
-      "Remove an item from a list by its 1-based position id.",
-      [
-        { name: "list", type: "string", description: "List name to remove the item from." },
-        { name: "id", type: "number", description: "1-based item id to remove." }
-      ]
-    );
-  }
-
-  getSchema() {
-    return createActionSchema(this.name, {
-      list: Type.String({ minLength: 1, description: "List name for remove." }),
-      id: Type.Integer({ minimum: 1, description: "1-based item id for remove." })
-    });
+    super(services, REMOVE_COMMAND_SETUP);
   }
 
   parse(input: unknown): ICommandParseResult<ItemRefInput> {

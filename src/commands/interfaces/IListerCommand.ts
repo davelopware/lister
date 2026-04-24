@@ -1,5 +1,5 @@
 import type { TSchema } from "@sinclair/typebox";
-import type { ToolResult } from "../../tool-types.js";
+import type { ToolResult } from "../../toolTypes.js";
 import type { ICommandArgument } from "./ICommandArgument.js";
 import type { ICommandParseResult } from "./ICommandParseResult.js";
 

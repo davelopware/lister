@@ -1,12 +1,12 @@
 import { Type } from "@sinclair/typebox";
 import { BaseCommand } from "./base/BaseCommand.js";
-import { createActionSchema } from "./helpers/command-schema-helpers.js";
-import { readOptionalPositiveInt, readRequiredString, requireObject } from "./helpers/command-parse-helpers.js";
+import { commandArg } from "./helpers/commandSchemaHelpers.js";
+import { readOptionalPositiveInt, readRequiredString, requireObject } from "./helpers/commandParseHelpers.js";
 import type { ICommandParseResult } from "./interfaces/ICommandParseResult.js";
 import type { IItemsCommand } from "./interfaces/IItemsCommand.js";
 import type { IServices } from "../services/interfaces/IServices.js";
 import type { IListerStoreService } from "../services/interfaces/IListerStoreService.js";
-import type { ItemsInput, ToolResult } from "../tool-types.js";
+import type { ItemsInput, ToolResult } from "../toolTypes.js";
 import { getListNameValidationError } from "../services/ListerStoreService.js";
 
 function filterItems(items: Awaited<ReturnType<IListerStoreService["items"]>>, limit?: number) {
@@ -16,22 +16,30 @@ function filterItems(items: Awaited<ReturnType<IListerStoreService["items"]>>, l
   return items.slice(0, limit);
 }
 
+const ITEMS_COMMAND_SETUP = {
+  name: "items",
+  description: "Return items from a list, optionally limited.",
+  requiredArgs: [
+    commandArg(
+      "list",
+      "string",
+      "List name to read from.",
+      (description) => Type.String({ minLength: 1, description })
+    )
+  ],
+  optionalArgs: [
+    commandArg(
+      "limit",
+      "number",
+      "Maximum number of items to return.",
+      (description) => Type.Integer({ minimum: 1, description })
+    )
+  ]
+} as const;
+
 export class ItemsCommand extends BaseCommand<ItemsInput> implements IItemsCommand {
   constructor(services: IServices) {
-    super(
-      services,
-      "items",
-      "Return items from a list, optionally limited.",
-      [{ name: "list", type: "string", description: "List name to read from." }],
-      [{ name: "limit", type: "number", description: "Maximum number of items to return." }]
-    );
-  }
-
-  getSchema() {
-    return createActionSchema(this.name, {
-      list: Type.String({ minLength: 1, description: "List name for items." }),
-      limit: Type.Optional(Type.Integer({ minimum: 1, description: "Maximum number of items to return from items." }))
-    });
+    super(services, ITEMS_COMMAND_SETUP);
   }
 
   parse(input: unknown): ICommandParseResult<ItemsInput> {
