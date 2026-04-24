@@ -31,6 +31,15 @@ function runCapture(command, args) {
   }).trim();
 }
 
+function hasRemoteTag(tagName) {
+  try {
+    const remoteTag = runCapture("git", ["ls-remote", "--tags", "--refs", "origin", `refs/tags/${tagName}`]);
+    return remoteTag !== "";
+  } catch {
+    return false;
+  }
+}
+
 function trackedGitStatus() {
   return runCapture("git", ["status", "--short", "--untracked-files=no"]);
 }
@@ -79,7 +88,7 @@ const tarballPath = resolve(rootDir, tarballName);
 const packageLockPath = resolve(rootDir, "package-lock.json");
 
 let localTagExists = false;
-let remoteTagExists = false;
+let remoteTagPresent = false;
 
 const currentBranch = runCapture("git", ["rev-parse", "--abbrev-ref", "HEAD"]);
 if (currentBranch === "HEAD") {
@@ -100,15 +109,14 @@ try {
 }
 
 try {
-  const remoteTag = runCapture("git", ["ls-remote", "--tags", "--refs", "origin", `refs/tags/${tag}`]);
-  remoteTagExists = remoteTag !== "";
+  remoteTagPresent = hasRemoteTag(tag);
 } catch {
-  remoteTagExists = false;
+  remoteTagPresent = false;
 }
 
-if (localTagExists || remoteTagExists) {
+if (localTagExists || remoteTagPresent) {
   const rl = createInterface({ input: stdin, output: stdout });
-  const locations = [localTagExists ? "local" : "", remoteTagExists ? "remote" : ""].filter(Boolean).join(" and ");
+  const locations = [localTagExists ? "local" : "", remoteTagPresent ? "remote" : ""].filter(Boolean).join(" and ");
   const answer = (await rl.question(`tag ${tag} already exists (${locations}). overwrite it? [y/N] `)).trim().toLowerCase();
   rl.close();
 
@@ -119,7 +127,7 @@ if (localTagExists || remoteTagExists) {
   if (localTagExists) {
     run("git", ["tag", "--delete", tag]);
   }
-  if (remoteTagExists) {
+  if (remoteTagPresent) {
     run("git", ["push", "origin", `:refs/tags/${tag}`]);
   }
 }
@@ -165,7 +173,13 @@ if (postPackTrackedStatus !== "") {
 
 // Only publish once the version, tag, and tarball are all aligned.
 run("git", ["tag", tag]);
-run("git", ["push", "origin", `HEAD:${currentBranch}`, tag]);
+run("git", ["push", "origin", `HEAD:${currentBranch}`]);
+run("git", ["push", "origin", `refs/tags/${tag}:refs/tags/${tag}`]);
+
+if (!hasRemoteTag(tag)) {
+  throw new Error(`tag push did not create refs/tags/${tag} on origin`);
+}
+
 run("gh", [
   "release",
   "create",
