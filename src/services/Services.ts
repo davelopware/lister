@@ -1,3 +1,10 @@
+/**
+ * Minimal service container for the concrete runtime singletons used by Lister.
+ *
+ * This is intentionally small and explicit rather than a generic DI framework.
+ * `tool.ts` wires instances into this container once per effective store path,
+ * then commands pull the collaborators they need from `IServices`.
+ */
 import type { ICommandRegisterService } from "./interfaces/ICommandRegisterService.js";
 import type { IListerStoreService } from "./interfaces/IListerStoreService.js";
 import type { IListTypeRegisterService } from "./interfaces/IListTypeRegisterService.js";

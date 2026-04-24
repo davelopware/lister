@@ -4,159 +4,90 @@ Simple, fast, opinionated list management for agentic workflows.
 
 ## OpenClaw Plugin
 
-This repository is being prepared as a native OpenClaw plugin package.
+Lister is primarily structured as a native OpenClaw plugin.
 
-Today it already ships:
+In practice that means:
 
-- a native plugin manifest at `openclaw.plugin.json`
-- OpenClaw skills under `openclaw/skills/`
-- an OpenClaw tool manifest at `openclaw/tools/lister.tool.json`
-- package metadata in `package.json` for native plugin discovery
+- OpenClaw loads the package through the plugin entry exported from `src/index.ts`
+- the plugin registers one tool, `lister`
+- that tool exposes a small command surface for creating lists, inspecting them, and mutating items
+- list data is persisted locally in a `lister-store` directory scoped to the current workspace or agent runtime context
 
-The runtime plugin entry is wired up through `./dist/index.js` and registers Lister as a native OpenClaw tool.
+The project is deliberately split so the OpenClaw-specific integration stays thin. The core behavior lives in the shared TypeScript command and service layers, which means the same internal machinery can also support direct library usage and future surfaces such as a CLI if needed.
 
-## Library Usage
+## High-Level Concepts
 
-Lister exposes a TypeScript function API for direct invocation with deterministic JSON results.
+There are a few core concepts worth understanding before reading the code.
 
-### Repo-local usage
+### 1. One Tool, Many Commands
 
-Build first:
+Lister is exposed to OpenClaw as a single tool with an `action` field. That action maps to a command such as:
 
-```bash
-npm install
-npm run build
-```
+- `showCommands`
+- `showListTypes`
+- `create`
+- `lists`
+- `add`
+- `items`
+- `remove`
+- `update`
+- `clear`
+- `status`
 
-Then import from the compiled output:
+Each command lives in its own file under `src/commands/` and owns its own metadata, argument parsing, and execution logic.
 
-```ts
-import { add, create, items, listTypeSchema, lists, showCommands, showListTypes, status, update } from "./dist/tool.js";
+### 2. Typed Lists
 
-const commands = await showCommands();
-const supported = await showListTypes();
-const todoSchema = await listTypeSchema({ listTypeName: "todos" });
+Every list has a `list_type`. The list type defines the shape of the item payload stored in that list.
 
-await create({
-  list: "tasks",
-  listType: "todos",
-  description: "Delivery commitments"
-});
+Built-in types live in `src/builtin-list-types.json`. Optional custom types can be loaded at runtime from:
 
-const knownLists = await lists();
-// knownLists.lists => [{ name, list_type, description }]
+`lister-store/_config/custom-list-types.json`
 
-await add({
-  list: "tasks",
-  data: { text: "ship v1", due: "2026-05-01T09:00:00Z", status: "open" }
-});
+This keeps item schemas explicit and predictable instead of turning every list into an unstructured blob.
 
-const openItems = await items({
-  list: "tasks",
-  limit: 20
-});
+### 3. Local File-Backed Storage
 
-await update({
-  list: "tasks",
-  id: 1,
-  data: { text: "ship v1.1", due: "2026-05-03T09:00:00Z", status: "open" }
-});
+Lister stores data as JSON files on disk rather than in an external database.
 
-const summary = await status();
-```
+- each list is one JSON file
+- item IDs are 1-based positional identifiers
+- the store path is resolved from runtime context, `LISTER_STORE_FOLDER`, or the current working directory
 
-Supported operations:
+That makes the tool easy to inspect, easy to move between environments, and deterministic in tests.
 
-- `showCommands()`
-- `commandArgs(input)`
-- `showListTypes()`
-- `listTypeSchema(input)`
-- `create(input)`
-- `lists()`
-- `add(input)`
-- `items(input)`
-- `remove(input)`
-- `update(input)`
-- `clear(input)`
-- `status()`
+### 4. Clear Separation Of Responsibilities
 
-Optional: set a custom database location.
+The codebase is organized so the major layers stay narrow:
 
-```bash
-export LISTER_STORE_FOLDER="/tmp/lister-lists"
-```
+- `src/index.ts`: package entry point and OpenClaw plugin registration
+- `src/pluginTool.ts`: OpenClaw adapter, tool schema, and runtime context resolution
+- `src/tool.ts`: framework-neutral command dispatch and service bootstrap
+- `src/commands/`: one class per command
+- `src/services/`: persistence, list-type registry, command registry, and service container
 
-Default path is `./lister-store` relative to the current working directory where Lister is invoked.
-`status()` also reports the resolved full store path and whether that store directory exists yet.
-Optional custom list types are loaded from `./lister-store/_config/custom-list-types.json` by default, or from `_config/custom-list-types.json` under the overridden `LISTER_STORE_FOLDER`.
+That split is the main thing that makes the codebase easy to extend without introducing hidden coupling.
 
-List name restriction: 1-64 chars, lowercase `a-z`, `0-9`, `-`, `_`; must start with `a-z` or `0-9`.
+## How A Request Flows
 
-Each list is stored in its own JSON file. Every list file has this root schema:
+At a high level, a Lister request works like this:
 
-```json
-{
-  "version": "0.2.0",
-  "description": "A description of the list",
-  "list_type": "general",
-  "items": []
-}
-```
+1. OpenClaw invokes the `lister` tool with an `action`.
+2. `src/pluginTool.ts` resolves the runtime store path and finds the command for that action.
+3. The command parses and validates its input through `BaseCommand`.
+4. The command uses shared services to perform the requested operation.
+5. The result is returned as deterministic JSON.
 
-`version` is the Lister package version that created the file schema.
+The same command and service layer is also used by the direct TypeScript API in `src/tool.ts`.
 
-## List Types
+## For Contributors
 
-Use `showListTypes()` to list available list type names and descriptions.
-Use `listTypeSchema({ listTypeName })` to inspect the fields for a specific list type.
+Start here if you want to understand or extend the codebase:
 
-- `general`: each item must be `{ "text": string }`
-- `todos`: each item must be `{ "text": string, "due": datetime, "status": string }`
-- `people`: each item must be `{ "nickname", "name", "email", "phone", "relation", "birthday", "additional" }` (all string fields)
-- `habits`: each item must be `{ "habit", "frequency", "target", "progress", "last_completed", "streak", "notes" }`
-- `shopping-items`: each item must be `{ "item", "quantity", "category", "store", "budget", "status" }`
-- `health-log`: each item must be `{ "metric", "value", "unit", "recorded_at", "context", "notes" }`
-- `waiting-on`: each item must be `{ "subject", "owner", "requested_at", "due_by", "status", "next_follow_up" }`
+- [`CONTRIBUTING.md`](./CONTRIBUTING.md): local setup, repo map, and change workflow
+- [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md): request flow and module responsibilities
+- [`test/integration.test.mjs`](./test/integration.test.mjs): end-to-end behavior contract
 
-Custom type file shape:
-
-```json
-{
-  "types": [
-    {
-      "name": "vendors",
-      "purpose": "Track suppliers and commercial contacts.",
-      "fields": [
-        {
-          "name": "name",
-          "type": "string",
-          "description": "Vendor name"
-        },
-        {
-          "name": "owner",
-          "type": "string",
-          "description": "Internal owner"
-        },
-        {
-          "name": "renewal_date",
-          "type": "datetime",
-          "description": "Renewal date in parseable ISO 8601 format where possible"
-        }
-      ]
-    }
-  ]
-}
-```
-
-## Behavior
-
-- Every item has a positional numeric `id` (1-based, top-to-bottom order in file).
-- `add(input)` appends to the end when `id` is omitted, or inserts at `id` and shifts items below down by one.
-- If `add(input)` receives an `id` beyond the current end, the item is appended and assigned the next position id.
-- `remove({ list, id })` removes by position id and reindexes items below.
-- Every item has `createdAt` and `updatedAt`.
-- `status` remains valid inside `data` for list types that include it, for example `todos`.
-- Destructive clear requires explicit confirmation (`confirm: true` in function mode).
 
 ## Development
 

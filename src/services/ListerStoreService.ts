@@ -1,3 +1,10 @@
+/**
+ * File-backed persistence for list metadata and list items.
+ *
+ * Commands should use this service for list reads and mutations instead of
+ * reaching into the filesystem directly. This class owns the on-disk JSON
+ * shape, path layout, and positional item-id behavior.
+ */
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { DEFAULT_LIST_TYPE_NAME, type IListTypeRegisterService, type ListerListType } from "./interfaces/IListTypeRegisterService.js";

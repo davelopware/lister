@@ -1,3 +1,11 @@
+/**
+ * Runtime registry for built-in and user-defined list types.
+ *
+ * This service owns three related concerns:
+ * - loading bundled and custom type definitions
+ * - validating and merging the registry at startup
+ * - validating item payloads against the selected type schema
+ */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import builtinListTypesConfig from "../builtin-list-types.json" with { type: "json" };
@@ -63,6 +71,7 @@ export class ListTypeRegisterService implements IListTypeRegisterService {
       throw new Error(`Unknown list type: ${listType}`);
     }
 
+    // Lister keeps list items strict: no missing fields and no extras.
     ListTypeRegisterService.exactKeys(
       data,
       info.fields.map((field) => field.name)
