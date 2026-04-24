@@ -86,7 +86,7 @@ Start here if you want to understand or extend the codebase:
 
 - [`CONTRIBUTING.md`](./CONTRIBUTING.md): local setup, repo map, and change workflow
 - [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md): request flow and module responsibilities
-- [`test/integration.test.mjs`](./test/integration.test.mjs): end-to-end behavior contract
+- [`test/integration/`](./test/integration/): end-to-end behavior contract
 
 
 ## Development
@@ -125,4 +125,4 @@ npm run release -- <x.y.z>
 
 `release` requires a clean tracked worktree, updates `package.json` to the requested version, commits the version bump before tagging, runs `npm pack` (which also runs the test/build flow through `prepack`), verifies the tarball exists, confirms `prepack` did not modify tracked files, pushes the branch and tag, and then creates the GitHub release.
 
-Tests live in `test/integration.test.mjs` and validate file schema plus core list lifecycle behavior.
+Tests live under `test/integration/` and validate command behavior, service behavior, plugin wiring, package layout, and core storage lifecycle behavior.

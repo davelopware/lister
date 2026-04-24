@@ -4,7 +4,7 @@ This repository is small, but it has a deliberate structure. New contributors sh
 
 - [`README.md`](./README.md): product surface, usage, and release commands
 - [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md): execution flow and module responsibilities
-- [`test/integration.test.mjs`](./test/integration.test.mjs): end-to-end behavior contract
+- [`test/integration/`](./test/integration/): end-to-end behavior contract split by command, service, plugin, and package concerns
 
 ## Local Setup
 
@@ -40,7 +40,7 @@ Useful commands:
 - `src/builtin-list-types.json`: built-in list type definitions shipped with the package
 - `openclaw/`: plugin manifests and bundled skill metadata
 - `scripts/`: build/release helper scripts
-- `test/integration.test.mjs`: primary regression suite
+- `test/integration/`: primary regression suite
 
 ## How The Code Is Organized
 
@@ -64,7 +64,7 @@ For most changes, read files in this order:
 4. `src/commands/base/BaseCommand.ts`
 5. The specific command file you want to change
 6. The relevant service under `src/services/`
-7. `test/integration.test.mjs`
+7. `test/integration/`
 
 That path mirrors how a request moves through the system.
 
@@ -75,7 +75,7 @@ That path mirrors how a request moves through the system.
 1. Update or add the command class in `src/commands/`.
 2. If the command needs a new input shape, update the matching interface file in `src/commands/interfaces/`.
 3. Register the command in `configureServices()` in `src/tool.ts`.
-4. Add or update integration coverage in `test/integration.test.mjs`.
+4. Add or update integration coverage in the relevant file under `test/integration/`.
 5. If the command changes the public surface, update `README.md` and `openclaw/skills/lister/SKILL.md`.
 
 ### Change list storage behavior
@@ -116,7 +116,7 @@ Preserve the separation between the generic tool surface and the OpenClaw adapte
 
 Default expectation for behavior changes:
 
-- add or update an integration test in `test/integration.test.mjs`
+- add or update an integration test in `test/integration/`
 - run `npm test`
 
 Use `npm pack` when a change touches:

@@ -171,7 +171,7 @@ Use this checklist:
 3. Define argument metadata with `commandArg(...)`.
 4. Implement execution in terms of services, not direct filesystem calls from the command.
 5. Register the command in `configureServices()` in `src/tool.ts`.
-6. Add integration coverage in `test/integration.test.mjs`.
+6. Add integration coverage in the relevant file under `test/integration/`.
 7. Update user-facing docs if the public contract changed.
 
 ## Why The Design Is Like This
