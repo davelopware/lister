@@ -9,7 +9,7 @@ test("CommandRegisterService: exposes the configured command set and schema", as
   const commands = registry.getCommands();
 
   assert.equal(commands.length, 12);
-  assert.equal(registry.findCommand("create")?.name, "create");
+  assert.equal(registry.findCommand("listCreate")?.name, "listCreate");
   assert.equal(registry.findCommand("missing"), undefined);
 
   const schema = registry.buildSchema();

@@ -7,15 +7,15 @@ import { withTempStore } from "../helpers/testHelpers.mjs";
 
 test("status(): returns store path, existence, and aggregate counts across lists", async () => {
   await withTempStore(async (context) => {
-    await lister.create({ list: "tasks", listType: "todos", description: "Delivery commitments" }, context);
-    await lister.add(
+    await lister.listCreate({ list: "tasks", listType: "todos", description: "Delivery commitments" }, context);
+    await lister.itemCreate(
       {
         list: "tasks",
         data: { text: "Task one", due: "2026-05-01T09:00:00Z", status: "open" }
       },
       context
     );
-    await lister.add({ list: "bugs", data: { text: "Bug one" } }, context);
+    await lister.itemCreate({ list: "bugs", data: { text: "Bug one" } }, context);
 
     const status = await lister.status(context);
     assert.equal(status.ok, true);

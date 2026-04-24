@@ -23,15 +23,15 @@ There are a few core concepts worth understanding before reading the code.
 
 Lister is exposed to OpenClaw as a single tool with an `action` field. That action maps to a command such as:
 
-- `showCommands`
-- `showListTypes`
-- `create`
-- `lists`
-- `add`
-- `items`
-- `remove`
-- `update`
-- `clear`
+- `commandGetAll`
+- `typeGetAll`
+- `listCreate`
+- `listsGet`
+- `itemCreate`
+- `itemGetAll`
+- `itemRemove`
+- `itemUpdate`
+- `listClear`
 - `status`
 
 Each command lives in its own file under `src/commands/` and owns its own metadata, argument parsing, and execution logic.

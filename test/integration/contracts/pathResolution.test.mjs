@@ -13,8 +13,8 @@ test("storage: LISTER_STORE_FOLDER overrides default storage folder", async () =
   process.env.LISTER_STORE_FOLDER = storePath;
 
   try {
-    await lister.create({ list: "env-list", listType: "general" });
-    await lister.add({ list: "env-list", data: { text: "from-env" } });
+    await lister.listCreate({ list: "env-list", listType: "general" });
+    await lister.itemCreate({ list: "env-list", data: { text: "from-env" } });
 
     const parsed = await readListFile(storePath, "env-list");
     assert.equal(parsed.version, LISTER_PACKAGE_VERSION);

@@ -25,7 +25,7 @@ The important point is that OpenClaw-specific behavior is mostly adapter code. T
 
 ### Library/API flow
 
-1. A caller imports a function such as `create()` or `items()` from `src/tool.ts`.
+1. A caller imports a function such as `listCreate()` or `itemGetAll()` from `src/tool.ts`.
 2. `runCommand()` resolves the effective store path and refreshes services if the path changed.
 3. The `CommandRegisterService` looks up the matching command class.
 4. The command parses input through `BaseCommand`.

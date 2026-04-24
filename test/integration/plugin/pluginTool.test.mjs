@@ -9,12 +9,12 @@ test("lister tool: uses workspace-scoped storage and preflight validation", asyn
   await withTempWorkspace(async (workspaceDir) => {
     const tool = createListerTool({ workspaceDir });
 
-    const missingList = await tool.execute("call-1", { action: "create" });
+    const missingList = await tool.execute("call-1", { action: "listCreate" });
     assert.equal(missingList.details.ok, false);
     assert.equal(missingList.details.error, "list is required");
 
     const created = await tool.execute("call-2", {
-      action: "create",
+      action: "listCreate",
       list: "tasks",
       listType: "todos",
       description: "Workspace scoped"

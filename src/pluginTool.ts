@@ -61,10 +61,10 @@ export function createListerTool(ctx?: OpenClawPluginToolContext) {
     promptSnippet: "Use `lister` for structured local lists such as tasks, notes, habits, shopping items, contacts, health logs, waiting-on queues, and custom typed lists.",
     promptGuidelines: [
       "Always provide the `action` field.",
-      "Use `showCommands` to discover commands, `commandArgs` to inspect a command's arguments, and `showListTypes` to discover available list types.",
-      "Use `listTypeSchema` when you need the field schema for a specific list type.",
-      "For `add` and `update`, send the full item payload in `data` using the target list type's schema.",
-      "For `clear`, require explicit confirmation with `confirm: true`."
+      "Use `commandGetAll` to discover commands, `commandGet` to inspect a command's arguments, and `typeGetAll` to discover available list types.",
+      "Use `typeGet` when you need the field schema for a specific list type.",
+      "For `itemCreate` and `itemUpdate`, send the full item payload in `data` using the target list type's schema.",
+      "For `listClear`, require explicit confirmation with `confirm: true`."
     ],
     executionMode: "sequential" as const,
     parameters: registry.buildSchema(),
@@ -73,7 +73,7 @@ export function createListerTool(ctx?: OpenClawPluginToolContext) {
       if (!raw) {
         const result = { ok: false, error: "params must be a JSON object" } satisfies ToolResult;
         return {
-          content: [{ type: "text" as const, text: formatResult(result, "showCommands") }],
+          content: [{ type: "text" as const, text: formatResult(result, "commandGetAll") }],
           details: result
         };
       }
@@ -82,7 +82,7 @@ export function createListerTool(ctx?: OpenClawPluginToolContext) {
       if (typeof action !== "string") {
         const result = { ok: false, error: "action must be a valid Lister operation" } satisfies ToolResult;
         return {
-          content: [{ type: "text" as const, text: formatResult(result, "showCommands") }],
+          content: [{ type: "text" as const, text: formatResult(result, "commandGetAll") }],
           details: result
         };
       }
@@ -91,7 +91,7 @@ export function createListerTool(ctx?: OpenClawPluginToolContext) {
       if (!command) {
         const result = { ok: false, error: "action must be a valid Lister operation" } satisfies ToolResult;
         return {
-          content: [{ type: "text" as const, text: formatResult(result, "showCommands") }],
+          content: [{ type: "text" as const, text: formatResult(result, "commandGetAll") }],
           details: result
         };
       }

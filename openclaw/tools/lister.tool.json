@@ -5,17 +5,17 @@
   "runtime": "node",
   "entrypoint": "dist/tool.js",
   "handlers": {
-    "showCommands": "showCommands",
-    "commandArgs": "commandArgs",
-    "showListTypes": "showListTypes",
-    "listTypeSchema": "listTypeSchema",
-    "create": "create",
-    "lists": "lists",
-    "add": "add",
-    "items": "items",
-    "remove": "remove",
-    "update": "update",
-    "clear": "clear",
+    "commandGetAll": "commandGetAll",
+    "commandGet": "commandGet",
+    "typeGetAll": "typeGetAll",
+    "typeGet": "typeGet",
+    "listCreate": "listCreate",
+    "listsGet": "listsGet",
+    "itemCreate": "itemCreate",
+    "itemGetAll": "itemGetAll",
+    "itemRemove": "itemRemove",
+    "itemUpdate": "itemUpdate",
+    "listClear": "listClear",
     "status": "status"
   },
   "install": {
@@ -29,32 +29,32 @@
     "style": "direct-function",
     "functions": [
       {
-        "name": "showCommands",
+        "name": "commandGetAll",
         "description": "Show the available commands and describe what each command does",
         "args": {}
       },
       {
-        "name": "commandArgs",
+        "name": "commandGet",
         "description": "Show the required and optional arguments for a specific command",
         "args": {
           "commandName": "string"
         }
       },
       {
-        "name": "showListTypes",
+        "name": "typeGetAll",
         "description": "List the available built-in and custom list types with their descriptions",
         "args": {}
       },
       {
-        "name": "listTypeSchema",
+        "name": "typeGet",
         "description": "Show the fields for a specific list type",
         "args": {
           "listTypeName": "string"
         }
       },
       {
-        "name": "create",
-        "description": "Create a list with optional type and description. Use showListTypes first to discover valid listType names.",
+        "name": "listCreate",
+        "description": "Create a list with optional type and description. Use typeGetAll first to discover valid listType names.",
         "args": {
           "list": "string",
           "listType": "string?",
@@ -62,12 +62,12 @@
         }
       },
       {
-        "name": "lists",
+        "name": "listsGet",
         "description": "List all known lists with name, list_type, and description",
         "args": {}
       },
       {
-        "name": "add",
+        "name": "itemCreate",
         "description": "Add an item to a list using JSON object with optional positional id insert",
         "args": {
           "list": "string",
@@ -76,7 +76,7 @@
         }
       },
       {
-        "name": "items",
+        "name": "itemGetAll",
         "description": "Return list items, optionally limited",
         "args": {
           "list": "string",
@@ -84,7 +84,7 @@
         }
       },
       {
-        "name": "remove",
+        "name": "itemRemove",
         "description": "Delete an item by positional id from a specific list",
         "args": {
           "list": "string",
@@ -92,7 +92,7 @@
         }
       },
       {
-        "name": "update",
+        "name": "itemUpdate",
         "description": "Update an item by positional id in a specific list",
         "args": {
           "list": "string",
@@ -101,7 +101,7 @@
         }
       },
       {
-        "name": "clear",
+        "name": "listClear",
         "description": "Clear all items in a list",
         "args": {
           "list": "string",
