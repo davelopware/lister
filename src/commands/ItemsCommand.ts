@@ -1,8 +1,6 @@
 import { Type } from "@sinclair/typebox";
 import { BaseCommand } from "./base/BaseCommand.js";
 import { commandArg } from "./helpers/commandSchemaHelpers.js";
-import { readOptionalPositiveInt, readRequiredString, requireObject } from "./helpers/commandParseHelpers.js";
-import type { ICommandParseResult } from "./interfaces/ICommandParseResult.js";
 import type { IItemsCommand } from "./interfaces/IItemsCommand.js";
 import type { IServices } from "../services/interfaces/IServices.js";
 import type { IListerStoreService } from "../services/interfaces/IListerStoreService.js";
@@ -40,28 +38,6 @@ const ITEMS_COMMAND_SETUP = {
 export class ItemsCommand extends BaseCommand<ItemsInput> implements IItemsCommand {
   constructor(services: IServices) {
     super(services, ITEMS_COMMAND_SETUP);
-  }
-
-  parse(input: unknown): ICommandParseResult<ItemsInput> {
-    const params = requireObject(input);
-    if (!params.ok) {
-      return { ok: false, error: params.error };
-    }
-    const list = readRequiredString(params.parsed!, "list");
-    if (!list.ok) {
-      return { ok: false, error: list.error };
-    }
-    const limit = readOptionalPositiveInt(params.parsed!, "limit");
-    if (!limit.ok) {
-      return { ok: false, error: limit.error };
-    }
-    return {
-      ok: true,
-      parsed: {
-        list: list.parsed!,
-        ...(limit.parsed !== undefined ? { limit: limit.parsed } : {})
-      }
-    };
   }
 
   async execute(parsed: ItemsInput): Promise<ToolResult> {

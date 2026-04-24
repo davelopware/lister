@@ -22,18 +22,6 @@ export function parseNoArgs(input: unknown): ICommandParseResult<Record<string, 
   return parseSuccess({});
 }
 
-export function parseRequiredString(input: unknown, fieldName: string): ICommandParseResult<string> {
-  const record = asObjectRecord(input);
-  if (!record) {
-    return parseFailure("params must be a JSON object");
-  }
-  const value = record[fieldName];
-  if (typeof value !== "string" || value.trim() === "") {
-    return parseFailure(`${fieldName} is required`);
-  }
-  return parseSuccess(value);
-}
-
 export function requireObject(input: unknown): ICommandParseResult<Record<string, unknown>> {
   const record = asObjectRecord(input);
   if (!record) {

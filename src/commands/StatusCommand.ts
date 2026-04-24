@@ -1,5 +1,4 @@
 import { BaseCommand } from "./base/BaseCommand.js";
-import { parseNoArgs } from "./helpers/commandParseHelpers.js";
 import type { IStatusCommand } from "./interfaces/IStatusCommand.js";
 import type { IServices } from "../services/interfaces/IServices.js";
 import type { ToolResult } from "../toolTypes.js";
@@ -14,10 +13,6 @@ const STATUS_COMMAND_SETUP = {
 export class StatusCommand extends BaseCommand<Record<string, never>> implements IStatusCommand {
   constructor(services: IServices) {
     super(services, STATUS_COMMAND_SETUP);
-  }
-
-  parse(input: unknown) {
-    return parseNoArgs(input);
   }
 
   async execute(_parsed: Record<string, never>): Promise<ToolResult> {

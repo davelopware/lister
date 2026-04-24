@@ -1,9 +1,7 @@
 import { Type } from "@sinclair/typebox";
 import { BaseCommand } from "./base/BaseCommand.js";
 import { commandArg } from "./helpers/commandSchemaHelpers.js";
-import { parseRequiredString } from "./helpers/commandParseHelpers.js";
 import type { ICommandArgsCommand } from "./interfaces/ICommandArgsCommand.js";
-import type { ICommandParseResult } from "./interfaces/ICommandParseResult.js";
 import type { IServices } from "../services/interfaces/IServices.js";
 import type { CommandArgsInput, ToolResult } from "../toolTypes.js";
 
@@ -11,8 +9,11 @@ const COMMAND_ARGS_COMMAND_SETUP = {
   name: "commandArgs",
   description: "Show the required and optional arguments for a specific command.",
   requiredArgs: [
-    commandArg("commandName", "string", "Name of the command to show the arguments for.", (description) =>
-      Type.String({ minLength: 1, description })
+    commandArg(
+      "commandName",
+      "string",
+      "Name of the command to show the arguments for.",
+      (description) => Type.String({ minLength: 1, description })
     )
   ]
 } as const;
@@ -20,19 +21,6 @@ const COMMAND_ARGS_COMMAND_SETUP = {
 export class CommandArgsCommand extends BaseCommand<CommandArgsInput> implements ICommandArgsCommand {
   constructor(services: IServices) {
     super(services, COMMAND_ARGS_COMMAND_SETUP);
-  }
-
-  parse(input: unknown): ICommandParseResult<CommandArgsInput> {
-    const commandName = parseRequiredString(input, "commandName");
-    if (!commandName.ok) {
-      return { ok: false, error: commandName.error };
-    }
-    return {
-      ok: true,
-      parsed: {
-        commandName: commandName.parsed!
-      }
-    };
   }
 
   async execute(parsed: CommandArgsInput): Promise<ToolResult> {

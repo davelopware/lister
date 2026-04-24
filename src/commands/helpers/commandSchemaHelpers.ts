@@ -1,18 +1,20 @@
 import { Type, type TProperties, type TSchema } from "@sinclair/typebox";
 import type { ICommandArgument } from "../interfaces/ICommandArgument.js";
-import type { ICommandArgumentDefinition } from "../interfaces/ICommandArgumentDefinition.js";
+import type { ICommandArgumentDefinition, TCommandArgumentParser } from "../interfaces/ICommandArgumentDefinition.js";
 
 export function commandArg(
   name: string,
   type: string,
   description: string,
-  schema: (description: string) => TSchema
+  schema: (description: string) => TSchema,
+  parser: TCommandArgumentParser = "default"
 ): ICommandArgumentDefinition {
   return {
     name,
     type,
     description,
-    schema
+    schema,
+    parser
   };
 }
 
@@ -32,14 +34,11 @@ export function splitCommandArgs(
   };
 }
 
-export function createActionSchema(
-  action: string,
+function createCommandProperties(
   requiredDefinitions: readonly ICommandArgumentDefinition[] = [],
   optionalDefinitions: readonly ICommandArgumentDefinition[] = []
-) {
-  const properties: TProperties = {
-    action: Type.Literal(action)
-  };
+): TProperties {
+  const properties: TProperties = {};
 
   for (const definition of requiredDefinitions) {
     properties[definition.name] = definition.schema(definition.description);
@@ -49,7 +48,21 @@ export function createActionSchema(
     properties[definition.name] = Type.Optional(definition.schema(definition.description));
   }
 
-  return Type.Object(properties, {
-    additionalProperties: false
-  });
+  return properties;
+}
+
+export function createActionSchema(
+  action: string,
+  requiredDefinitions: readonly ICommandArgumentDefinition[] = [],
+  optionalDefinitions: readonly ICommandArgumentDefinition[] = []
+) {
+  return Type.Object(
+    {
+      action: Type.Literal(action),
+      ...createCommandProperties(requiredDefinitions, optionalDefinitions)
+    },
+    {
+      additionalProperties: false
+    }
+  );
 }

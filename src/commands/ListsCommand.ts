@@ -1,5 +1,4 @@
 import { BaseCommand } from "./base/BaseCommand.js";
-import { parseNoArgs } from "./helpers/commandParseHelpers.js";
 import type { IListsCommand } from "./interfaces/IListsCommand.js";
 import type { IServices } from "../services/interfaces/IServices.js";
 import type { ToolResult } from "../toolTypes.js";
@@ -12,10 +11,6 @@ const LISTS_COMMAND_SETUP = {
 export class ListsCommand extends BaseCommand<Record<string, never>> implements IListsCommand {
   constructor(services: IServices) {
     super(services, LISTS_COMMAND_SETUP);
-  }
-
-  parse(input: unknown) {
-    return parseNoArgs(input);
   }
 
   async execute(_parsed: Record<string, never>): Promise<ToolResult> {

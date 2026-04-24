@@ -1,8 +1,6 @@
 import { Type } from "@sinclair/typebox";
 import { BaseCommand } from "./base/BaseCommand.js";
 import { commandArg } from "./helpers/commandSchemaHelpers.js";
-import { readOptionalString, readRequiredString, requireObject } from "./helpers/commandParseHelpers.js";
-import type { ICommandParseResult } from "./interfaces/ICommandParseResult.js";
 import type { ICreateCommand } from "./interfaces/ICreateCommand.js";
 import type { IServices } from "../services/interfaces/IServices.js";
 import type { CreateInput, ToolResult } from "../toolTypes.js";
@@ -28,33 +26,6 @@ const CREATE_COMMAND_SETUP = {
 export class CreateCommand extends BaseCommand<CreateInput> implements ICreateCommand {
   constructor(services: IServices) {
     super(services, CREATE_COMMAND_SETUP);
-  }
-
-  parse(input: unknown): ICommandParseResult<CreateInput> {
-    const params = requireObject(input);
-    if (!params.ok) {
-      return { ok: false, error: params.error };
-    }
-    const list = readRequiredString(params.parsed!, "list");
-    if (!list.ok) {
-      return { ok: false, error: list.error };
-    }
-    const listType = readOptionalString(params.parsed!, "listType");
-    if (!listType.ok) {
-      return { ok: false, error: listType.error };
-    }
-    const description = readOptionalString(params.parsed!, "description");
-    if (!description.ok) {
-      return { ok: false, error: description.error };
-    }
-    return {
-      ok: true,
-      parsed: {
-        list: list.parsed!,
-        ...(listType.parsed !== undefined ? { listType: listType.parsed } : {}),
-        ...(description.parsed !== undefined ? { description: description.parsed } : {})
-      }
-    };
   }
 
   async execute(parsed: CreateInput): Promise<ToolResult> {

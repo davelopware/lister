@@ -86,12 +86,12 @@ async function runCommand(commandName: string, input: unknown, context?: ToolCon
     return { ok: false, error: `Unknown command: ${commandName}` };
   }
 
-  const parsed = command.parse(input);
-  if (!parsed.ok) {
-    return command.buildParseError(parsed);
+  const parseResult = command.parse(input);
+  if (!parseResult.ok) {
+    return command.buildParseError(parseResult);
   }
 
-  return command.execute(parsed.parsed as never);
+  return command.execute(parseResult.parsed as never);
 }
 
 export async function showCommands(): Promise<ToolResult> {

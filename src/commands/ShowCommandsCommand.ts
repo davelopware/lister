@@ -1,4 +1,3 @@
-import { parseNoArgs } from "./helpers/commandParseHelpers.js";
 import { BaseCommand } from "./base/BaseCommand.js";
 import type { IShowCommandsCommand } from "./interfaces/IShowCommandsCommand.js";
 import type { IServices } from "../services/interfaces/IServices.js";
@@ -12,10 +11,6 @@ const SHOW_COMMANDS_COMMAND_SETUP = {
 export class ShowCommandsCommand extends BaseCommand<Record<string, never>> implements IShowCommandsCommand {
   constructor(services: IServices) {
     super(services, SHOW_COMMANDS_COMMAND_SETUP);
-  }
-
-  parse(input: unknown) {
-    return parseNoArgs(input);
   }
 
   async execute(_parsed: Record<string, never>): Promise<ToolResult> {
