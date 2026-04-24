@@ -1,9 +1,9 @@
 import { Type } from "@sinclair/typebox";
 import { BaseCommand } from "./base/BaseCommand.js";
 import { commandArg } from "./helpers/commandSchemaHelpers.js";
-import type { ICommandArgsCommand } from "./interfaces/ICommandArgsCommand.js";
+import type { CommandArgsInput, ICommandArgsCommand } from "./interfaces/ICommandArgsCommand.js";
 import type { IServices } from "../services/interfaces/IServices.js";
-import type { CommandArgsInput, ToolResult } from "../toolTypes.js";
+import type { ToolResult } from "../toolTypes.js";
 
 const COMMAND_ARGS_COMMAND_SETUP = {
   name: "commandArgs",

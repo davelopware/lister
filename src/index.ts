@@ -41,16 +41,8 @@ export {
   showListTypes,
   status,
   update,
-  type AddInput,
-  type CommandArgsInput,
-  type ClearInput,
-  type CreateInput,
-  type ItemRefInput,
-  type ItemsInput,
-  type ListTypeSchemaInput,
   type ToolContext,
   type ToolResult,
-  type UpdateInput
 } from "./tool.js";
 export { LISTER_PACKAGE_VERSION } from "./version.js";
 

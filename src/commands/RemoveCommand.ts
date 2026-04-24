@@ -1,9 +1,9 @@
 import { Type } from "@sinclair/typebox";
 import { BaseCommand } from "./base/BaseCommand.js";
 import { commandArg } from "./helpers/commandSchemaHelpers.js";
-import type { IRemoveCommand } from "./interfaces/IRemoveCommand.js";
+import type { IRemoveCommand, ItemRefInput } from "./interfaces/IRemoveCommand.js";
 import type { IServices } from "../services/interfaces/IServices.js";
-import type { ItemRefInput, ToolResult } from "../toolTypes.js";
+import type { ToolResult } from "../toolTypes.js";
 import { getListNameValidationError } from "../services/ListerStoreService.js";
 
 const REMOVE_COMMAND_SETUP = {

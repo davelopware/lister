@@ -1,9 +1,9 @@
 import { Type } from "@sinclair/typebox";
 import { BaseCommand } from "./base/BaseCommand.js";
 import { commandArg } from "./helpers/commandSchemaHelpers.js";
-import type { IClearCommand } from "./interfaces/IClearCommand.js";
+import type { ClearInput, IClearCommand } from "./interfaces/IClearCommand.js";
 import type { IServices } from "../services/interfaces/IServices.js";
-import type { ClearInput, ToolResult } from "../toolTypes.js";
+import type { ToolResult } from "../toolTypes.js";
 import { getListNameValidationError } from "../services/ListerStoreService.js";
 
 const CLEAR_COMMAND_SETUP = {

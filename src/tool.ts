@@ -7,9 +7,16 @@
  *
  * Relative to the other entry-point files:
  * - `pluginTool.ts` wraps this surface for OpenClaw plugin execution
- * - `toolTypes.ts` defines the shared command/result shapes used here
+ * - `toolTypes.ts` defines shared runtime context/result shapes used here
  * - `index.ts` re-exports this API as part of the package public surface
- */
+*/
+import { resolveDbPath } from "./utils/pathUtils.js";
+import type { IServices } from "./services/interfaces/IServices.js";
+import { Services } from "./services/Services.js";
+import { ListerStoreService } from "./services/ListerStoreService.js";
+import { ListTypeRegisterService } from "./services/ListTypeRegisterService.js";
+import { CommandRegisterService } from "./services/CommandRegisterService.js";
+import type { IListerCommand } from "./commands/interfaces/IListerCommand.js";
 import { AddCommand } from "./commands/AddCommand.js";
 import { ClearCommand } from "./commands/ClearCommand.js";
 import { CommandArgsCommand } from "./commands/CommandArgsCommand.js";
@@ -22,24 +29,17 @@ import { ShowCommandsCommand } from "./commands/ShowCommandsCommand.js";
 import { ShowListTypesCommand } from "./commands/ShowListTypesCommand.js";
 import { StatusCommand } from "./commands/StatusCommand.js";
 import { UpdateCommand } from "./commands/UpdateCommand.js";
-import type { IListerCommand } from "./commands/interfaces/IListerCommand.js";
-import { CommandRegisterService } from "./services/CommandRegisterService.js";
-import { ListerStoreService } from "./services/ListerStoreService.js";
-import type { IServices } from "./services/interfaces/IServices.js";
-import { ListTypeRegisterService } from "./services/ListTypeRegisterService.js";
-import { resolveDbPath } from "./utils/pathUtils.js";
-import { Services } from "./services/Services.js";
+import type { AddInput } from "./commands/interfaces/IAddCommand.js";
+import type { ClearInput } from "./commands/interfaces/IClearCommand.js";
+import type { CommandArgsInput } from "./commands/interfaces/ICommandArgsCommand.js";
+import type { CreateInput } from "./commands/interfaces/ICreateCommand.js";
+import type { ItemsInput } from "./commands/interfaces/IItemsCommand.js";
+import type { ListTypeSchemaInput } from "./commands/interfaces/IListTypeSchemaCommand.js";
+import type { ItemRefInput } from "./commands/interfaces/IRemoveCommand.js";
+import type { UpdateInput } from "./commands/interfaces/IUpdateCommand.js";
 import type {
-  AddInput,
-  ClearInput,
-  CommandArgsInput,
-  CreateInput,
-  ItemRefInput,
-  ItemsInput,
-  ListTypeSchemaInput,
   ToolContext,
   ToolResult,
-  UpdateInput
 } from "./toolTypes.js";
 
 export function configureServices(services: IServices, dbPath: string): IServices {
@@ -145,14 +145,6 @@ export async function status(context?: ToolContext): Promise<ToolResult> {
 }
 
 export type {
-  AddInput,
-  ClearInput,
-  CommandArgsInput,
-  CreateInput,
-  ItemRefInput,
-  ItemsInput,
-  ListTypeSchemaInput,
   ToolContext,
-  ToolResult,
-  UpdateInput
+  ToolResult
 } from "./toolTypes.js";

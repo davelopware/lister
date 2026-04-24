@@ -1,9 +1,9 @@
 import { Type } from "@sinclair/typebox";
 import { BaseCommand } from "./base/BaseCommand.js";
 import { commandArg } from "./helpers/commandSchemaHelpers.js";
-import type { ICreateCommand } from "./interfaces/ICreateCommand.js";
+import type { CreateInput, ICreateCommand } from "./interfaces/ICreateCommand.js";
 import type { IServices } from "../services/interfaces/IServices.js";
-import type { CreateInput, ToolResult } from "../toolTypes.js";
+import type { ToolResult } from "../toolTypes.js";
 import { getListNameValidationError } from "../services/ListerStoreService.js";
 
 const CREATE_COMMAND_SETUP = {

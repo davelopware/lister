@@ -1,9 +1,9 @@
 import { Type } from "@sinclair/typebox";
 import { BaseCommand } from "./base/BaseCommand.js";
 import { commandArg } from "./helpers/commandSchemaHelpers.js";
-import type { IListTypeSchemaCommand } from "./interfaces/IListTypeSchemaCommand.js";
+import type { IListTypeSchemaCommand, ListTypeSchemaInput } from "./interfaces/IListTypeSchemaCommand.js";
 import type { IServices } from "../services/interfaces/IServices.js";
-import type { ListTypeSchemaInput, ToolResult } from "../toolTypes.js";
+import type { ToolResult } from "../toolTypes.js";
 
 const LIST_TYPE_SCHEMA_COMMAND_SETUP = {
   name: "listTypeSchema",

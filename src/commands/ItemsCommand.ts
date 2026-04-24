@@ -1,10 +1,10 @@
 import { Type } from "@sinclair/typebox";
 import { BaseCommand } from "./base/BaseCommand.js";
 import { commandArg } from "./helpers/commandSchemaHelpers.js";
-import type { IItemsCommand } from "./interfaces/IItemsCommand.js";
+import type { IItemsCommand, ItemsInput } from "./interfaces/IItemsCommand.js";
 import type { IServices } from "../services/interfaces/IServices.js";
 import type { IListerStoreService } from "../services/interfaces/IListerStoreService.js";
-import type { ItemsInput, ToolResult } from "../toolTypes.js";
+import type { ToolResult } from "../toolTypes.js";
 import { getListNameValidationError } from "../services/ListerStoreService.js";
 
 function filterItems(items: Awaited<ReturnType<IListerStoreService["items"]>>, limit?: number) {
