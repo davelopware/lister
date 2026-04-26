@@ -57,14 +57,15 @@ export function createListerTool(ctx?: OpenClawPluginToolContext) {
   return {
     name: "lister",
     label: "Lister",
-    description: "Manage structured local lists. Choose an action, then provide the matching fields for that action.",
-    promptSnippet: "Use `lister` for structured local lists such as tasks, notes, habits, shopping items, contacts, health logs, waiting-on queues, and custom typed lists.",
+    description: "Safely manage local lists with this tool. Choose an action, then provide the matching fields for that action.",
+    promptSnippet: "Use `lister` for general and structured local lists such as tasks, notes, habits, shopping items, contacts, health logs, waiting-on queues, and custom typed lists.",
     promptGuidelines: [
       "Always provide the `action` field.",
       "Use `commandGetAll` to discover commands, `commandGet` to inspect a command's arguments, and `typeGetAll` to discover available list types.",
       "Use `typeGet` when you need the field schema for a specific list type.",
       "For `itemCreate` and `itemUpdate`, send the full item payload in `data` using the target list type's schema.",
-      "For `listClear`, require explicit confirmation with `confirm: true`."
+      "For `listClear` and `listRemove`, require explicit confirmation with `confirm: true`.",
+      "NEVER edit files in the list store directly: use the provided commands to ensure data integrity and consistency.",
     ],
     executionMode: "sequential" as const,
     parameters: registry.buildSchema(),

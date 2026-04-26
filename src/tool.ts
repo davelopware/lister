@@ -19,6 +19,7 @@ import { CommandRegisterService } from "./services/CommandRegisterService.js";
 import type { IListerCommand } from "./commands/interfaces/IListerCommand.js";
 import { ItemCreateCommand } from "./commands/ItemCreateCommand.js";
 import { ListClearCommand } from "./commands/ListClearCommand.js";
+import { ListRemoveCommand } from "./commands/ListRemoveCommand.js";
 import { CommandGetCommand } from "./commands/CommandGetCommand.js";
 import { ListCreateCommand } from "./commands/ListCreateCommand.js";
 import { ItemGetAllCommand } from "./commands/ItemGetAllCommand.js";
@@ -31,6 +32,7 @@ import { StatusCommand } from "./commands/StatusCommand.js";
 import { ItemUpdateCommand } from "./commands/ItemUpdateCommand.js";
 import type { ItemCreateInput } from "./commands/interfaces/IItemCreateCommand.js";
 import type { ListClearInput } from "./commands/interfaces/IListClearCommand.js";
+import type { ListRemoveInput } from "./commands/interfaces/IListRemoveCommand.js";
 import type { CommandGetInput } from "./commands/interfaces/ICommandGetCommand.js";
 import type { ListCreateInput } from "./commands/interfaces/IListCreateCommand.js";
 import type { ItemGetAllInput } from "./commands/interfaces/IItemGetAllCommand.js";
@@ -64,6 +66,7 @@ export function configureServices(services: IServices, dbPath: string): IService
     new ItemRemoveCommand(services),
     new ItemUpdateCommand(services),
     new ListClearCommand(services),
+    new ListRemoveCommand(services),
     new StatusCommand(services)
   ];
 
@@ -136,6 +139,10 @@ export async function itemUpdate(input: ItemUpdateInput, context?: ToolContext):
 
 export async function listClear(input: ListClearInput, context?: ToolContext): Promise<ToolResult> {
   return runCommand("listClear", input, context);
+}
+
+export async function listRemove(input: ListRemoveInput, context?: ToolContext): Promise<ToolResult> {
+  return runCommand("listRemove", input, context);
 }
 
 export async function status(context?: ToolContext): Promise<ToolResult> {

@@ -16,6 +16,7 @@
     "itemRemove": "itemRemove",
     "itemUpdate": "itemUpdate",
     "listClear": "listClear",
+    "listRemove": "listRemove",
     "status": "status"
   },
   "install": {
@@ -103,6 +104,14 @@
       {
         "name": "listClear",
         "description": "Clear all items in a list",
+        "args": {
+          "list": "string",
+          "confirm": "true"
+        }
+      },
+      {
+        "name": "listRemove",
+        "description": "Remove a list and all of its items",
         "args": {
           "list": "string",
           "confirm": "true"

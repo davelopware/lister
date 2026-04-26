@@ -5,7 +5,7 @@
  * reaching into the filesystem directly. This class owns the on-disk JSON
  * shape, path layout, and positional item-id behavior.
  */
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { DEFAULT_LIST_TYPE_NAME, type IListTypeRegisterService, type ListerListType } from "./interfaces/IListTypeRegisterService.js";
 import { ListTypeRegisterService } from "./ListTypeRegisterService.js";
@@ -85,8 +85,8 @@ export class ListerStoreService implements IListerStoreService {
 
     await this.writeList(listName, list);
     return inserted;
-  }
-
+  }  
+  
   async createList(
     listName: string,
     options?: { description?: string; listType?: ListerListType }
@@ -98,21 +98,35 @@ export class ListerStoreService implements IListerStoreService {
         created: false,
         listType: existing.list.list_type,
         description: existing.list.description
-      };
-    }
+      };  
+    }  
 
     const list: ListFile = {
       version: EMPTY_LIST_FILE.version,
       description: options?.description ?? EMPTY_LIST_FILE.description,
       list_type: options?.listType ?? EMPTY_LIST_FILE.list_type,
       items: []
-    };
+    };  
     await this.writeList(listName, list);
     return {
       created: true,
       listType: list.list_type,
       description: list.description
-    };
+    };  
+  }  
+  
+  async removeList(listName: string): Promise<boolean> {
+    this.assertValidListName(listName);
+    try {
+      await rm(this.listFilePath(listName));
+      return true;
+    } catch (error) {
+      const asNodeError = error as NodeJS.ErrnoException;
+      if (asNodeError.code === "ENOENT") {
+        return false;
+      }
+      throw error;
+    }
   }
 
   async getListInfo(listName: string): Promise<{ exists: boolean; listType: ListerListType; description: string }> {
@@ -122,14 +136,14 @@ export class ListerStoreService implements IListerStoreService {
       exists: result.exists,
       listType: result.list.list_type,
       description: result.list.description
-    };
-  }
+    };  
+  }  
 
   async items(listName: string): Promise<ListItem[]> {
     this.assertValidListName(listName);
     const { list } = await this.readList(listName);
     return [...list.items].sort((a, b) => a.id - b.id);
-  }
+  }  
 
   async remove(listName: string, id: number): Promise<boolean> {
     this.assertValidListName(listName);

@@ -27,6 +27,7 @@ export interface IListerStoreService {
     listName: string,
     options?: { description?: string; listType?: ListerListType }
   ): Promise<{ created: boolean; listType: ListerListType; description: string }>;
+  removeList(listName: string): Promise<boolean>;
   getListInfo(listName: string): Promise<{ exists: boolean; listType: ListerListType; description: string }>;
   items(listName: string): Promise<ListItem[]>;
   remove(listName: string, id: number): Promise<boolean>;

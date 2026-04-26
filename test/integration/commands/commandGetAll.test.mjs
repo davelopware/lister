@@ -5,22 +5,23 @@ import * as lister from "../../../dist/tool.js";
 test("commandGetAll(): returns the available commands with descriptions", async () => {
   const result = await lister.commandGetAll();
   assert.equal(result.ok, true);
-  assert.equal(result.count, 12);
+  assert.equal(result.count, 13);
 
-  const names = result.commands.map((entry) => entry.name).sort();
+  const names = result.commands.map((entry) => entry.name);
   assert.deepEqual(names, [
-    "commandGet",
     "commandGetAll",
+    "commandGet",
+    "typeGetAll",
+    "typeGet",
+    "listCreate",
+    "listsGet",
     "itemCreate",
     "itemGetAll",
     "itemRemove",
     "itemUpdate",
     "listClear",
-    "listCreate",
-    "listsGet",
+    "listRemove",
     "status",
-    "typeGet",
-    "typeGetAll"
   ]);
 
   const itemCreate = result.commands.find((entry) => entry.name === "itemCreate");

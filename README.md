@@ -27,10 +27,11 @@ Lister is exposed to OpenClaw as a single tool with an `action` field. That acti
 - `typeGetAll`
 - `listCreate`
 - `listsGet`
+- `listRemove`
 - `itemCreate`
 - `itemGetAll`
-- `itemRemove`
 - `itemUpdate`
+- `itemRemove`
 - `listClear`
 - `status`
 

@@ -1,6 +1,6 @@
 ---
 name: lister
-description: "Use for structured list memory with typed schemas. Triggers: backlog, queue, todo, worklist, triage, contacts, habits, shopping, health-log, waiting-on. Commands: commandGetAll, commandGet, typeGetAll, typeGet, listCreate, listsGet, itemCreate, itemGetAll, itemRemove, itemUpdate, listClear, status."
+description: "Use for structured list memory with typed schemas. Triggers: backlog, queue, todo, worklist, triage, contacts, habits, shopping, health-log, waiting-on. Commands: commandGetAll, commandGet, typeGetAll, typeGet, listCreate, listsGet, itemCreate, itemGetAll, itemRemove, itemUpdate, listClear, listRemove, status."
 argument-hint: "function name and JSON args"
 user-invocable: true
 ---
@@ -24,11 +24,11 @@ user-invocable: true
 
 ## Operating Rules
 1. NEVER manipulate store files directly. Only use lister tool commands to ensure store integrity.
-2. Always provide list name for mutating calls: listCreate, itemCreate, itemRemove, itemUpdate, listClear.
+2. Always provide list name for mutating calls: listCreate, itemCreate, itemRemove, itemUpdate, listClear, listRemove.
 3. List names: 1-64 chars, lowercase `a-z`, `0-9`, `-`, `_`; must start with `a-z` or `0-9`.
 4. Read & write data as flat JSON objects matching selected list type schema.
 5. IDs are 1-based positions; itemCreate with id inserts and reindexes down. inserts, updates and removes can cause ids to change.
-6. listClear requires confirm: true.
+6. listClear and listRemove require confirm: true.
 7. typeGetAll() returns available list types and descriptions.
 8. typeGet({ listTypeName }) returns list type field schema; check before listCreate, itemCreate, or itemUpdate if schema not already known.
 9. Custom list types can be added in `lister-store/_config/custom-list-types.json`. follow the same structure as `dist/builtin-list-types.json`.
@@ -40,10 +40,11 @@ user-invocable: true
 4. typeGet({ "listTypeName": "..." }) get field schema for specific list type.
 5. listCreate({ list, listType, description }) creates new list.
 6. listsGet() get list items and metadata.
-7. itemCreate({ list, data }) or itemCreate({ list, id, data }) to create new item.
-8. itemGetAll({ list, limit? }) get all items in a list.
-9. itemUpdate({ list, id, data }) or itemRemove({ list, id }) to change or remove a list item.
-10. status() for store path/existence and aggregate summary.
+7. listRemove({ list, confirm }) removes a list and all of its items.
+8. itemCreate({ list, data }) or itemCreate({ list, id, data }) to create new item.
+9. itemGetAll({ list, limit? }) get all items in a list.
+10. itemUpdate({ list, id, data }) or itemRemove({ list, id }) to change or remove a list item.
+11. status() for store path/existence and aggregate summary.
 
 ## Minimal Examples
 
@@ -73,6 +74,9 @@ user-invocable: true
 
 ### Empty A List
 - listClear({"list":"tasks","confirm":true}) to remove all items from the list (but keep the list itself)
+
+### Remove A List
+- listRemove({"list":"tasks","confirm":true}) to remove entire list and all its items
 
 ### Get The Overall Status Of The Lister Plugin
 - status() to get information about the store path, whether the store exists, and total count of lists and list items.
