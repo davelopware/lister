@@ -114,3 +114,57 @@ test("itemUpdate(): supports merged custom list types", async () => {
     });
   });
 });
+
+test("itemUpdate(): normalizes empty values across string, number, and datetime fields", async () => {
+  await withTempStore(async (context) => {
+    await lister.listCreate({ list: "health-list", listType: "health-log" }, context);
+    await lister.itemCreate(
+      {
+        list: "health-list",
+        data: {
+          metric: "weight",
+          value: 75.2,
+          unit: "kg",
+          recorded_at: "2026-04-18T07:30:00Z",
+          context: "fasted",
+          notes: "steady"
+        }
+      },
+      context
+    );
+
+    const updated = await lister.itemUpdate(
+      {
+        list: "health-list",
+        id: 1,
+        data: {
+          metric: null,
+          value: "",
+          recorded_at: "",
+          notes: null
+        }
+      },
+      context
+    );
+    assert.equal(updated.ok, true);
+    assert.deepEqual(updated.item.data, {
+      metric: "",
+      value: null,
+      unit: "kg",
+      recorded_at: null,
+      context: "fasted",
+      notes: ""
+    });
+
+    const listed = await lister.itemGetAll({ list: "health-list" }, context);
+    assert.equal(listed.ok, true);
+    assert.deepEqual(listed.items[0].data, {
+      metric: "",
+      value: null,
+      unit: "kg",
+      recorded_at: null,
+      context: "fasted",
+      notes: ""
+    });
+  });
+});

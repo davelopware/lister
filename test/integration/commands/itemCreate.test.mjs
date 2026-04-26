@@ -122,6 +122,47 @@ test("itemCreate(): supports habits, shopping-items, health-log, and waiting-on 
   });
 });
 
+test("itemCreate(): normalizes empty values across string, number, and datetime fields", async () => {
+  await withTempStore(async (context) => {
+    await lister.listCreate({ list: "health-list", listType: "health-log" }, context);
+
+    const created = await lister.itemCreate(
+      {
+        list: "health-list",
+        data: {
+          metric: null,
+          value: "",
+          unit: "",
+          recorded_at: null,
+          context: "fasted",
+          notes: ""
+        }
+      },
+      context
+    );
+    assert.equal(created.ok, true);
+    assert.deepEqual(created.item.data, {
+      metric: "",
+      value: null,
+      unit: "",
+      recorded_at: null,
+      context: "fasted",
+      notes: ""
+    });
+
+    const listed = await lister.itemGetAll({ list: "health-list" }, context);
+    assert.equal(listed.ok, true);
+    assert.deepEqual(listed.items[0].data, {
+      metric: "",
+      value: null,
+      unit: "",
+      recorded_at: null,
+      context: "fasted",
+      notes: ""
+    });
+  });
+});
+
 test("itemCreate(): supports merged custom list types", async () => {
   await withTempStore(async (context, dbPath) => {
     await writeListTypesConfig(dbPath, {

@@ -2,6 +2,7 @@ export const DEFAULT_LIST_TYPE_NAME = "general" as const;
 
 export type ListerListType = string;
 export type ListTypeFieldType = "string" | "number" | "datetime";
+export type ListTypeFieldValue = string | number | null;
 
 export type ListTypeField = {
   name: string;
@@ -27,6 +28,6 @@ export interface IListTypeRegisterService {
   getListTypeInfo(name: string): ListTypeInfo | undefined;
   listTypeInfos(): ListTypeInfo[];
   listTypeNames(): string[];
-  parseItemForListType(listType: string, data: Record<string, unknown>): Record<string, unknown>;
-  parsePartialItemForListType(listType: string, data: Record<string, unknown>): Record<string, unknown>;
+  parseItemForListType(listType: string, data: Record<string, unknown>): Record<string, ListTypeFieldValue>;
+  parsePartialItemForListType(listType: string, data: Record<string, unknown>): Record<string, ListTypeFieldValue>;
 }

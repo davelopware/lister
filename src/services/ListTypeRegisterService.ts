@@ -13,6 +13,7 @@ import {
   DEFAULT_LIST_TYPE_NAME,
   type IListTypeRegisterService,
   type ListTypeField,
+  type ListTypeFieldValue,
   type ListTypeFieldType,
   type ListTypeInfo,
   type ListTypeRegistry
@@ -65,7 +66,7 @@ export class ListTypeRegisterService implements IListTypeRegisterService {
     return this.listTypeInfos().map((info) => info.name);
   }
 
-  parseItemForListType(listType: string, data: Record<string, unknown>): Record<string, unknown> {
+  parseItemForListType(listType: string, data: Record<string, unknown>): Record<string, ListTypeFieldValue> {
     const info = this.getListTypeInfo(listType);
     if (!info) {
       throw new Error(`Unknown list type: ${listType}`);
@@ -80,7 +81,7 @@ export class ListTypeRegisterService implements IListTypeRegisterService {
     return Object.fromEntries(info.fields.map((field) => [field.name, ListTypeRegisterService.parseValueForField(field, data[field.name])]));
   }
 
-  parsePartialItemForListType(listType: string, data: Record<string, unknown>): Record<string, unknown> {
+  parsePartialItemForListType(listType: string, data: Record<string, unknown>): Record<string, ListTypeFieldValue> {
     const info = this.getListTypeInfo(listType);
     if (!info) {
       throw new Error(`Unknown list type: ${listType}`);
@@ -122,13 +123,20 @@ export class ListTypeRegisterService implements IListTypeRegisterService {
   }
 
   private static expectString(value: unknown, fieldName: string): string {
+    if (value === null) {
+      return "";
+    }
     if (typeof value !== "string") {
       throw new Error(`${fieldName} must be a string`);
     }
     return value;
   }
 
-  private static expectIsoDateString(value: unknown, fieldName: string): string {
+  private static expectIsoDateString(value: unknown, fieldName: string): string | null {
+    if (value === null || value === "") {
+      return null;
+    }
+
     const text = ListTypeRegisterService.expectString(value, fieldName);
     const parsed = Date.parse(text);
     if (Number.isNaN(parsed)) {
@@ -137,7 +145,10 @@ export class ListTypeRegisterService implements IListTypeRegisterService {
     return text;
   }
 
-  private static expectNumber(value: unknown, fieldName: string): number {
+  private static expectNumber(value: unknown, fieldName: string): number | null {
+    if (value === null || value === "") {
+      return null;
+    }
     if (typeof value !== "number" || Number.isNaN(value)) {
       throw new Error(`${fieldName} must be a number`);
     }
@@ -252,7 +263,7 @@ export class ListTypeRegisterService implements IListTypeRegisterService {
     return { types: merged, byName };
   }
 
-  private static parseValueForField(field: ListTypeField, value: unknown): string | number {
+  private static parseValueForField(field: ListTypeField, value: unknown): ListTypeFieldValue {
     switch (field.type) {
       case "string":
         return ListTypeRegisterService.expectString(value, field.name);
