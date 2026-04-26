@@ -80,6 +80,24 @@ export class ListTypeRegisterService implements IListTypeRegisterService {
     return Object.fromEntries(info.fields.map((field) => [field.name, ListTypeRegisterService.parseValueForField(field, data[field.name])]));
   }
 
+  parsePartialItemForListType(listType: string, data: Record<string, unknown>): Record<string, unknown> {
+    const info = this.getListTypeInfo(listType);
+    if (!info) {
+      throw new Error(`Unknown list type: ${listType}`);
+    }
+
+    const fieldsByName = new Map(info.fields.map((field) => [field.name, field]));
+    const parsedEntries = Object.entries(data).map(([fieldName, value]) => {
+      const field = fieldsByName.get(fieldName);
+      if (!field) {
+        throw new Error(`Expected fields: ${info.fields.map((entry) => entry.name).sort().join(", ")}`);
+      }
+      return [fieldName, ListTypeRegisterService.parseValueForField(field, value)];
+    });
+
+    return Object.fromEntries(parsedEntries);
+  }
+
   private loadRegistry(): ListTypeRegistry {
     const configPath = this.getListTypesConfigPath();
     const customTypes = this.loadCustomListTypes(configPath);

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import * as lister from "../../../dist/tool.js";
 import { withTempStore, writeListTypesConfig } from "../helpers/testHelpers.mjs";
 
-test("itemUpdate(): edits item data by id and validates parser rules", async () => {
+test("itemUpdate(): patches item data by id and validates parser rules", async () => {
   await withTempStore(async (context) => {
     await lister.listCreate({ list: "tasks", listType: "todos" }, context);
     await lister.itemCreate(
@@ -18,28 +18,44 @@ test("itemUpdate(): edits item data by id and validates parser rules", async () 
       {
         list: "tasks",
         id: 1,
-        data: { text: "updated", due: "2026-05-03T09:00:00Z", status: "open" }
+        data: { text: "updated", due: "2026-05-03T09:00:00Z" }
       },
       context
     );
     assert.equal(updated.ok, true);
+    assert.deepEqual(updated.item.data, {
+      text: "updated",
+      due: "2026-05-03T09:00:00Z",
+      status: "open"
+    });
 
     const invalid = await lister.itemUpdate(
       {
         list: "tasks",
         id: 1,
-        data: { text: "wrong" }
+        data: { status: 123 }
       },
       context
     );
     assert.equal(invalid.ok, false);
-    assert.match(invalid.error, /Expected fields/);
+    assert.equal(invalid.error, "status must be a string");
+
+    const unknownField = await lister.itemUpdate(
+      {
+        list: "tasks",
+        id: 1,
+        data: { text: "wrong", extra: "nope" }
+      },
+      context
+    );
+    assert.equal(unknownField.ok, false);
+    assert.match(unknownField.error, /Expected fields/);
 
     const missing = await lister.itemUpdate(
       {
         list: "tasks",
         id: 99,
-        data: { text: "updated", due: "2026-05-03T09:00:00Z", status: "open" }
+        data: { text: "updated" }
       },
       context
     );
@@ -82,7 +98,6 @@ test("itemUpdate(): supports merged custom list types", async () => {
         list: "suppliers",
         id: 1,
         data: {
-          name: "Acme Corp",
           owner: "Procurement",
           renewal_date: "2026-07-15T00:00:00Z"
         }

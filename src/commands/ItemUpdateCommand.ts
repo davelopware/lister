@@ -8,7 +8,7 @@ import { getListNameValidationError } from "../services/ListerStoreService.js";
 
 const ITEM_UPDATE_COMMAND_SETUP = {
   name: "itemUpdate",
-  description: "Replace an existing item in a list by its 1-based position id.",
+  description: "Update one or more fields on an existing item in a list by its 1-based position id.",
   requiredArgs: [
     commandArg(
       "list",
@@ -25,7 +25,7 @@ const ITEM_UPDATE_COMMAND_SETUP = {
     commandArg(
       "data",
       "object",
-      "Full item payload that matches the list type schema.",
+      "Partial item payload. Only supplied fields are updated, and each supplied field must match the list type schema.",
       (description) => Type.Object({}, { additionalProperties: true, description })
     )
   ]
@@ -47,10 +47,17 @@ export class ItemUpdateCommand extends BaseCommand<ItemUpdateInput> implements I
 
     const info = await store.getListInfo(parsed.list);
     try {
+      const existingItems = await store.items(parsed.list);
+      const existingItem = existingItems.find((entry) => entry.id === parsed.id);
+      if (!existingItem) {
+        return { ok: false, error: "item not found" };
+      }
+
+      const partialData = listTypeRegisterService.parsePartialItemForListType(info.listType, parsed.data);
       const item = await store.update(
         parsed.list,
         parsed.id,
-        listTypeRegisterService.parseItemForListType(info.listType, parsed.data)
+        { ...existingItem.data, ...partialData }
       );
       if (!item) {
         return { ok: false, error: "item not found" };

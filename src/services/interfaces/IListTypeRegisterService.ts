@@ -28,4 +28,5 @@ export interface IListTypeRegisterService {
   listTypeInfos(): ListTypeInfo[];
   listTypeNames(): string[];
   parseItemForListType(listType: string, data: Record<string, unknown>): Record<string, unknown>;
+  parsePartialItemForListType(listType: string, data: Record<string, unknown>): Record<string, unknown>;
 }
