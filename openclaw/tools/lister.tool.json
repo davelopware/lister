@@ -1,6 +1,6 @@
 {
   "name": "lister",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Simple, fast, efficient, opinionated list management for agentic AI",
   "runtime": "node",
   "entrypoint": "dist/tool.js",
