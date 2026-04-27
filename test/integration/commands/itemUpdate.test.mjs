@@ -5,7 +5,7 @@ import { withTempStore, writeListTypesConfig } from "../helpers/testHelpers.mjs"
 
 test("itemUpdate(): patches item data by id and validates parser rules", async () => {
   await withTempStore(async (context) => {
-    await lister.listCreate({ list: "tasks", listType: "todos" }, context);
+    await lister.listCreate({ list: "tasks", listType: "todos", description: "Track active tasks" }, context);
     await lister.itemCreate(
       {
         list: "tasks",
@@ -80,7 +80,7 @@ test("itemUpdate(): supports merged custom list types", async () => {
       ]
     });
 
-    await lister.listCreate({ list: "suppliers", listType: "vendors" }, context);
+    await lister.listCreate({ list: "suppliers", listType: "vendors", description: "Track vendor relationships" }, context);
     await lister.itemCreate(
       {
         list: "suppliers",
@@ -117,7 +117,7 @@ test("itemUpdate(): supports merged custom list types", async () => {
 
 test("itemUpdate(): normalizes empty values across string, number, and datetime fields", async () => {
   await withTempStore(async (context) => {
-    await lister.listCreate({ list: "health-list", listType: "health-log" }, context);
+    await lister.listCreate({ list: "health-list", listType: "health-log", description: "Track health readings" }, context);
     await lister.itemCreate(
       {
         list: "health-list",

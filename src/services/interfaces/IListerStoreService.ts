@@ -25,8 +25,8 @@ export interface IListerStoreService {
   add(listName: string, data: Record<string, unknown>, positionId?: number): Promise<ListItem>;
   createList(
     listName: string,
-    options?: { description?: string; listType?: ListerListType }
-  ): Promise<{ created: boolean; listType: ListerListType; description: string }>;
+    options: { description: string; listType?: ListerListType; firstItem?: Record<string, unknown> }
+  ): Promise<{ created: boolean; listType: ListerListType; description: string; item?: ListItem }>;
   removeList(listName: string): Promise<boolean>;
   getListInfo(listName: string): Promise<{ exists: boolean; listType: ListerListType; description: string }>;
   items(listName: string): Promise<ListItem[]>;

@@ -21,12 +21,12 @@ async function withStore(run) {
 
 test("ListerStoreService: createList() writes the expected root object", async () => {
   await withStore(async ({ dbPath, store }) => {
-    await store.createList("tasks", { listType: "todos", description: "Delivery commitments" });
+    await store.createList("tasks", { listType: "todos", description: "Track delivery commitments" });
 
     const parsed = await readListFile(dbPath, "tasks");
     assert.deepEqual(parsed, {
       version: LISTER_PACKAGE_VERSION,
-      description: "Delivery commitments",
+      description: "Track delivery commitments",
       list_type: "todos",
       items: []
     });
@@ -54,7 +54,7 @@ test("ListerStoreService: add() persists insertion order with 1-based ids", asyn
 
 test("ListerStoreService: update(), remove(), and clear() persist expected item state", async () => {
   await withStore(async ({ dbPath, store }) => {
-    await store.createList("tasks", { listType: "todos" });
+    await store.createList("tasks", { listType: "todos", description: "Track active tasks" });
     await store.add("tasks", { text: "first", due: "2026-05-01T09:00:00Z", status: "open" });
     await store.add("tasks", { text: "second", due: "2026-05-02T09:00:00Z", status: "open" });
 

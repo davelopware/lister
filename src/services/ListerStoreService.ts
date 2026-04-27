@@ -13,6 +13,7 @@ import { LISTER_PACKAGE_VERSION } from "../version.js";
 import type { IListerStoreService, ListFile, ListItem, ListReadResult } from "./interfaces/IListerStoreService.js";
 
 const LIST_NAME_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/;
+const MIN_LIST_DESCRIPTION_LENGTH = 10;
 
 export function getListNameValidationError(listName: string): string | undefined {
   if (typeof listName !== "string" || listName.trim() === "") {
@@ -89,9 +90,12 @@ export class ListerStoreService implements IListerStoreService {
   
   async createList(
     listName: string,
-    options?: { description?: string; listType?: ListerListType }
-  ): Promise<{ created: boolean; listType: ListerListType; description: string }> {
+    options: { description: string; listType?: ListerListType; firstItem?: Record<string, unknown> }
+  ): Promise<{ created: boolean; listType: ListerListType; description: string; item?: ListItem }> {
     this.assertValidListName(listName);
+    if (typeof options.description !== "string" || options.description.trim().length < MIN_LIST_DESCRIPTION_LENGTH) {
+      throw new Error(`description must be at least ${MIN_LIST_DESCRIPTION_LENGTH} characters`);
+    }
     const existing = await this.readList(listName);
     if (existing.exists) {
       return {
@@ -103,15 +107,25 @@ export class ListerStoreService implements IListerStoreService {
 
     const list: ListFile = {
       version: EMPTY_LIST_FILE.version,
-      description: options?.description ?? EMPTY_LIST_FILE.description,
-      list_type: options?.listType ?? EMPTY_LIST_FILE.list_type,
+      description: options.description,
+      list_type: options.listType ?? EMPTY_LIST_FILE.list_type,
       items: []
     };  
+    if (options.firstItem) {
+      const now = new Date().toISOString();
+      list.items.push({
+        id: 1,
+        createdAt: now,
+        updatedAt: now,
+        data: options.firstItem
+      });
+    }
     await this.writeList(listName, list);
     return {
       created: true,
       listType: list.list_type,
-      description: list.description
+      description: list.description,
+      ...(list.items[0] ? { item: list.items[0] } : {})
     };  
   }  
   

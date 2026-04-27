@@ -8,7 +8,7 @@ test("security: rejects invalid or traversal-like list names", async () => {
     const cases = ["", "../secrets", "notes/2026", "UPPER", "name with spaces", ".hidden"];
 
     for (const list of cases) {
-      const result = await lister.listCreate({ list, listType: "general" }, context);
+      const result = await lister.listCreate({ list, listType: "general", description: "Track secure notes" }, context);
       assert.equal(result.ok, false);
       assert.match(result.error, /list is required|invalid list name/);
     }

@@ -5,11 +5,22 @@ import type { IListCreateCommand, ListCreateInput } from "./interfaces/IListCrea
 import type { IServices } from "../services/interfaces/IServices.js";
 import type { ToolResult } from "../toolTypes.js";
 import { getListNameValidationError } from "../services/ListerStoreService.js";
+import { DEFAULT_LIST_TYPE_NAME } from "../services/interfaces/IListTypeRegisterService.js";
+
+const MIN_LIST_DESCRIPTION_LENGTH = 10;
 
 const LIST_CREATE_COMMAND_SETUP = {
   name: "listCreate",
-  description: "Create a list with an optional type and description.",
-  requiredArgs: [commandArg("list", "string", "List name to create.", (description) => Type.String({ minLength: 1, description }))],
+  description: "Create a list with a required description and an optional type.",
+  requiredArgs: [
+    commandArg("list", "string", "List name to create.", (description) => Type.String({ minLength: 1, description })),
+    commandArg(
+      "description",
+      "string",
+      `Human-readable description for the list. Minimum ${MIN_LIST_DESCRIPTION_LENGTH} characters.`,
+      (description) => Type.String({ minLength: MIN_LIST_DESCRIPTION_LENGTH, description })
+    )
+  ],
   optionalArgs: [
     commandArg(
       "listType",
@@ -17,8 +28,11 @@ const LIST_CREATE_COMMAND_SETUP = {
       "List type name for the new list. Use typeGetAll to discover built-in and custom values.",
       (description) => Type.String({ minLength: 1, description })
     ),
-    commandArg("description", "string", "Human-readable description for the list.", (description) =>
-      Type.String({ description })
+    commandArg(
+      "firstItem",
+      "object",
+      "Optional first item payload for the new list. It must match the selected list type schema.",
+      (description) => Type.Object({}, { additionalProperties: true, description })
     )
   ]
 } as const;
@@ -42,18 +56,36 @@ export class ListCreateCommand extends BaseCommand<ListCreateInput> implements I
         error: `Unknown listType: ${parsed.listType}. Available types: ${listTypeRegisterService.listTypeNames().join(", ")}`
       };
     }
+    if (parsed.description.trim().length < MIN_LIST_DESCRIPTION_LENGTH) {
+      return {
+        ok: false,
+        error: `description must be at least ${MIN_LIST_DESCRIPTION_LENGTH} characters`
+      };
+    }
 
-    const result = await store.createList(parsed.list, {
-      ...(parsed.listType ? { listType: parsed.listType } : {}),
-      ...(parsed.description !== undefined ? { description: parsed.description } : {})
-    });
+    try {
+      const listType = parsed.listType ?? DEFAULT_LIST_TYPE_NAME;
+      const firstItem =
+        parsed.firstItem === undefined
+          ? undefined
+          : listTypeRegisterService.parseItemForListType(listType, parsed.firstItem);
 
-    return {
-      ok: true,
-      created: result.created,
-      list: parsed.list,
-      list_type: result.listType,
-      description: result.description
-    };
+      const result = await store.createList(parsed.list, {
+        ...(parsed.listType ? { listType: parsed.listType } : {}),
+        description: parsed.description,
+        ...(firstItem !== undefined ? { firstItem } : {})
+      });
+
+      return {
+        ok: true,
+        created: result.created,
+        list: parsed.list,
+        list_type: result.listType,
+        description: result.description,
+        ...(result.item ? { item: result.item } : {})
+      };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : "Invalid list item" };
+    }
   }
 }

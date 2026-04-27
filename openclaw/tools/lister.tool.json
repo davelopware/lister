@@ -1,6 +1,6 @@
 {
   "name": "lister",
-  "version": "0.3.0",
+  "version": "0.5.0",
   "description": "Simple, fast, efficient, opinionated list management for agentic AI",
   "runtime": "node",
   "entrypoint": "dist/tool.js",
@@ -55,11 +55,12 @@
       },
       {
         "name": "listCreate",
-        "description": "Create a list with optional type and description. Use typeGetAll first to discover valid listType names.",
+        "description": "Create a list with a required description and optional type. Use typeGetAll first to discover valid listType names.",
         "args": {
           "list": "string",
+          "description": "string",
           "listType": "string?",
-          "description": "string?"
+          "firstItem": "object?"
         }
       },
       {
@@ -94,7 +95,7 @@
       },
       {
         "name": "itemUpdate",
-        "description": "Update an item by positional id in a specific list",
+        "description": "Update an item by positional id in a specific list accepting a PATCH-like partial update object",
         "args": {
           "list": "string",
           "id": "number",

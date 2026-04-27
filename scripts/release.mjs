@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { access, rm, readFile } from "node:fs/promises";
+import { access, rm, readFile, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { createInterface } from "node:readline/promises";
@@ -53,6 +53,17 @@ async function exists(path) {
   }
 }
 
+async function updateJsonVersion(path, nextVersion) {
+  const parsed = JSON.parse(await readFile(path, "utf8"));
+
+  if (typeof parsed.version !== "string" || parsed.version.trim() === "") {
+    throw new Error(`${path} must contain a non-empty version`);
+  }
+
+  parsed.version = nextVersion;
+  await writeFile(path, `${JSON.stringify(parsed, null, 2)}\n`, "utf8");
+}
+
 // ============================================================================
 // Argument parsing.
 // ============================================================================
@@ -86,6 +97,8 @@ const tag = `v${requestedVersion}`;
 const tarballName = `lister-${requestedVersion}.tgz`;
 const tarballPath = resolve(rootDir, tarballName);
 const packageLockPath = resolve(rootDir, "package-lock.json");
+const pluginManifestPath = resolve(rootDir, "openclaw.plugin.json");
+const toolManifestPath = resolve(rootDir, "openclaw/tools/lister.tool.json");
 
 let localTagExists = false;
 let remoteTagPresent = false;
@@ -148,7 +161,25 @@ if (packageVersion !== requestedVersion) {
   throw new Error(`version update failed: requested=${requestedVersion} package.json=${packageVersion}`);
 }
 
-const filesToCommit = ["package.json"];
+await updateJsonVersion(pluginManifestPath, packageVersion);
+await updateJsonVersion(toolManifestPath, packageVersion);
+
+const pluginManifest = JSON.parse(await readFile(pluginManifestPath, "utf8"));
+const toolManifest = JSON.parse(await readFile(toolManifestPath, "utf8"));
+
+if (pluginManifest.version !== packageVersion) {
+  throw new Error(`openclaw.plugin.json version update failed: expected=${packageVersion} actual=${pluginManifest.version}`);
+}
+
+if (toolManifest.version !== packageVersion) {
+  throw new Error(`openclaw/tools/lister.tool.json version update failed: expected=${packageVersion} actual=${toolManifest.version}`);
+}
+
+const filesToCommit = [
+  "package.json",
+  "openclaw.plugin.json",
+  "openclaw/tools/lister.tool.json"
+];
 if (await exists(packageLockPath)) {
   filesToCommit.push("package-lock.json");
 }

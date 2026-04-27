@@ -5,8 +5,8 @@ import { withTempStore } from "../helpers/testHelpers.mjs";
 
 test("listsGet(): returns list records with name, type, and description", async () => {
   await withTempStore(async (context) => {
-    await lister.listCreate({ list: "tasks", listType: "todos", description: "Delivery commitments" }, context);
-    await lister.listCreate({ list: "notes", listType: "general" }, context);
+    await lister.listCreate({ list: "tasks", listType: "todos", description: "Track delivery commitments" }, context);
+    await lister.listCreate({ list: "notes", listType: "general", description: "Track meeting notes" }, context);
 
     const result = await lister.listsGet(context);
     assert.equal(result.ok, true);
@@ -14,12 +14,12 @@ test("listsGet(): returns list records with name, type, and description", async 
       {
         name: "notes",
         list_type: "general",
-        description: "A description of the list"
+        description: "Track meeting notes"
       },
       {
         name: "tasks",
         list_type: "todos",
-        description: "Delivery commitments"
+        description: "Track delivery commitments"
       }
     ]);
   });

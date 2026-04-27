@@ -38,7 +38,7 @@ user-invocable: true
 2. commandGet({ "commandName": "..." }) gets exact arguments for one command.
 3. typeGetAll() to discover list type names.
 4. typeGet({ "listTypeName": "..." }) get field schema for specific list type.
-5. listCreate({ list, listType, description }) creates new list.
+5. listCreate({ list, description, listType }) creates new list. description is required and should clearly state the list's purpose.
 6. listsGet() get list items and metadata.
 7. listRemove({ list, confirm }) removes a list and all of its items.
 8. itemCreate({ list, data }) or itemCreate({ list, id, data }) to create new item.
@@ -55,7 +55,7 @@ user-invocable: true
 ### Create A New List
 - typeGetAll() to get the possible list types then
 - typeGet({"listTypeName":"todos"}) to understand the schema for the list type you choose then
-- listCreate({"list":"tasks","listType":"todos","description":"Delivery commitments"}) to create the list
+- listCreate({"list":"tasks","description":"Track current delivery commitments","listType":"todos"}) to create the list
 
 ### Add An Item To A List
 - itemCreate({"list":"tasks","data":{"text":"Ship MVP","due":"2026-05-01T09:00:00Z","status":"open"}}) to add a new item to the end of the list OR

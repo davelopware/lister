@@ -23,7 +23,7 @@ test("itemCreate(): appends by default, inserts at id, and oversized id appends"
 
 test("itemCreate(): enforces list-type payload schemas", async () => {
   await withTempStore(async (context) => {
-    await lister.listCreate({ list: "people-list", listType: "people" }, context);
+    await lister.listCreate({ list: "people-list", listType: "people", description: "Track important people" }, context);
 
     const rejected = await lister.itemCreate({ list: "people-list", data: { text: "wrong schema" } }, context);
     assert.equal(rejected.ok, false);
@@ -50,10 +50,10 @@ test("itemCreate(): enforces list-type payload schemas", async () => {
 
 test("itemCreate(): supports habits, shopping-items, health-log, and waiting-on payloads", async () => {
   await withTempStore(async (context) => {
-    await lister.listCreate({ list: "habit-list", listType: "habits" }, context);
-    await lister.listCreate({ list: "shopping-list", listType: "shopping-items" }, context);
-    await lister.listCreate({ list: "health-list", listType: "health-log" }, context);
-    await lister.listCreate({ list: "waiting-list", listType: "waiting-on" }, context);
+    await lister.listCreate({ list: "habit-list", listType: "habits", description: "Track regular habits" }, context);
+    await lister.listCreate({ list: "shopping-list", listType: "shopping-items", description: "Track shopping needs" }, context);
+    await lister.listCreate({ list: "health-list", listType: "health-log", description: "Track health readings" }, context);
+    await lister.listCreate({ list: "waiting-list", listType: "waiting-on", description: "Track pending follow-ups" }, context);
 
     const habitAdded = await lister.itemCreate(
       {
@@ -124,7 +124,7 @@ test("itemCreate(): supports habits, shopping-items, health-log, and waiting-on 
 
 test("itemCreate(): normalizes empty values across string, number, and datetime fields", async () => {
   await withTempStore(async (context) => {
-    await lister.listCreate({ list: "health-list", listType: "health-log" }, context);
+    await lister.listCreate({ list: "health-list", listType: "health-log", description: "Track health readings" }, context);
 
     const created = await lister.itemCreate(
       {
@@ -179,7 +179,7 @@ test("itemCreate(): supports merged custom list types", async () => {
       ]
     });
 
-    await lister.listCreate({ list: "suppliers", listType: "vendors" }, context);
+    await lister.listCreate({ list: "suppliers", listType: "vendors", description: "Track vendor relationships" }, context);
     const added = await lister.itemCreate(
       {
         list: "suppliers",

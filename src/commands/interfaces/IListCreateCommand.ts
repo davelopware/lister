@@ -3,7 +3,8 @@ import type { IListerCommand } from "./IListerCommand.js";
 export type ListCreateInput = {
   list: string;
   listType?: string;
-  description?: string;
+  description: string;
+  firstItem?: Record<string, unknown>;
 };
 
 export interface IListCreateCommand extends IListerCommand<ListCreateInput> {}

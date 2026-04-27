@@ -112,7 +112,7 @@ List file shape:
 ```json
 {
   "version": "0.3.0",
-  "description": "A description of the list",
+  "description": "Track current delivery commitments",
   "list_type": "general",
   "items": []
 }

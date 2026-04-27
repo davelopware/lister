@@ -124,6 +124,6 @@ Release flow:
 npm run release -- <x.y.z>
 ```
 
-`release` requires a clean tracked worktree, updates `package.json` to the requested version, commits the version bump before tagging, runs `npm pack` (which also runs the test/build flow through `prepack`), verifies the tarball exists, confirms `prepack` did not modify tracked files, pushes the branch and tag, and then creates the GitHub release.
+`release` requires a clean tracked worktree, updates `package.json`, `openclaw.plugin.json`, and `openclaw/tools/lister.tool.json` to the requested version, commits the version bump before tagging, runs `npm pack` (which also runs the test/build flow through `prepack`), verifies the tarball exists, confirms `prepack` did not modify tracked files, pushes the branch and tag, and then creates the GitHub release.
 
 Tests live under `test/integration/` and validate command behavior, service behavior, plugin wiring, package layout, and core storage lifecycle behavior.

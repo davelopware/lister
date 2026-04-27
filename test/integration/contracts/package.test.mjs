@@ -39,6 +39,7 @@ test("package contract: runtime deps and SDK subpath import stay aligned", async
 test("package layout: publish shape matches native plugin expectations", async () => {
   const pkg = JSON.parse(await readFile(new URL("../../../package.json", import.meta.url), "utf8"));
   const manifest = JSON.parse(await readFile(new URL("../../../openclaw.plugin.json", import.meta.url), "utf8"));
+  const toolManifest = JSON.parse(await readFile(new URL("../../../openclaw/tools/lister.tool.json", import.meta.url), "utf8"));
   const skillEntries = await readdir(new URL("../../../openclaw/skills", import.meta.url), { withFileTypes: true });
 
   await access(new URL("../../../dist/index.js", import.meta.url));
@@ -46,6 +47,8 @@ test("package layout: publish shape matches native plugin expectations", async (
   await access(new URL("../../../openclaw/tools/lister.tool.json", import.meta.url));
 
   assert.equal(manifest.id, "lister");
+  assert.equal(manifest.version, pkg.version);
+  assert.equal(toolManifest.version, pkg.version);
   assert.deepEqual(pkg.openclaw.extensions, ["./dist/index.js"]);
   assert.deepEqual(pkg.files, ["dist", "openclaw", "openclaw.plugin.json", "README.md"]);
   assert.equal(skillEntries.some((entry) => entry.isDirectory() && entry.name === "lister"), true);
